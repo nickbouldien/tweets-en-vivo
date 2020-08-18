@@ -1,45 +1,50 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/joho/godotenv"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-
-	"github.com/joho/godotenv"
+	"path"
 )
 
 const ApiKey = "API_KEY"
 const ApiSecret = "API_SECRET"
 const ApiToken = "API_TOKEN"
 
-//const twitterApiVersion = 2
 const baseURL = "https://api.twitter.com/2"
+const rulesURL = baseURL + "/tweets/search/stream/rules"
+const streamURL = baseURL + "/tweets/search/stream"
 
-//var twitterRules []string
+var twitterRules Rules
 var apiToken string
+var filename string
 
-// endpoints
-// GET /2/tweets/search/stream/rules
-//
+type Rules []byte
 
-type Tweet struct {
-	Data []TweetData `json:"data"`
-}
+//type Tweet struct {
+//	Data []TweetData `json:"data"`
+//}
 
-type TweetData struct {
-	//CreatedAt string `json:"created_at"`
-	//FullText string `json:"full_text"`
-	ID string `json:"id"`
-	Text string `json:"text"`
-}
+//type TweetData struct {
+//	//CreatedAt string `json:"created_at"`
+//	//FullText string `json:"full_text"`
+//	ID string `json:"id"`
+//	Text string `json:"text"`
+//}
 
 func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Fatal("Error loading the .env file")
 	}
+
+	// TODO - get the filename from command line args
+	filename = "rules.json"
 
 	apiKey := os.Getenv(ApiKey)
 	apiSecret := os.Getenv(ApiSecret)
@@ -55,32 +60,69 @@ func main() {
 				twitter api credentials in the .env file`)
 	}
 
-	//updateRules(&twitterRules)
+	// 1 - import the `rules.json` file
+	jsonFile, err := os.Open(path.Join("rules/", filename))
 
-	url := fmt.Sprintf(baseURL + "/tweets?ids=1261326399320715264")
-	//url := "http://example.com/"
-	fmt.Println("url: ", url)
 
-	body, err := fetch(url)
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer jsonFile.Close()
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+
+	json.Unmarshal(byteValue, &twitterRules)
+
+	fmt.Println("twitterRules: ", twitterRules)
+
+	// 2 - add the rules
+	body, err := addRules(twitterRules)
 	if err != nil {
 		fmt.Errorf("error reading the response: %v", err)
 	}
-	fmt.Println("body: ", body)
 
-	var tweet Tweet
-
-	if err := json.Unmarshal([]byte(body), &tweet); err != nil {
+	var rules interface{}
+	if err := json.Unmarshal(body, &rules); err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("tweet: ", tweet)
+	fmt.Println("rules: ", rules)
+
+	// 3 - check/verify the rules
+
+	// 4 - subscribe to the feed
 }
 
-func fetch(url string) ([]byte, error) {
+func fetchStream() ([]byte, error) {
+	bearerToken := "Bearer " + apiToken
+	req, err := http.NewRequest(http.MethodGet, streamURL, nil)
+	req.Header.Add("Authorization", bearerToken)
+
+	if err != nil {
+		return nil, fmt.Errorf("error fetching the stream: %v", err)
+	}
+
+	// TODO - implement
+	return nil, errors.New("error: not implemented")
+}
+
+func checkRules() ([]byte, error) {
+	bearerToken := "Bearer " + apiToken
+	req, err := http.NewRequest(http.MethodGet, rulesURL, nil)
+	req.Header.Add("Authorization", bearerToken)
+
+	if err != nil {
+		return nil, fmt.Errorf("error fetching the feed rules: %v", err)
+	}
+
+	// TODO - implement
+	return nil, errors.New("error: not implemented")
+}
+
+func addRules(jsonBody []byte) ([]byte, error) {
 	bearerToken := "Bearer " + apiToken
 
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	req, err := http.NewRequest(http.MethodPost, rulesURL, bytes.NewBuffer(jsonBody))
 	req.Header.Add("Authorization", bearerToken)
-	//resp, err := http.Get(url)
+	req.Header.Add("Content-type", "application/json")
 
 	fmt.Println("req: ", req)
 
@@ -88,11 +130,16 @@ func fetch(url string) ([]byte, error) {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		return nil, fmt.Errorf("error fetching the url: %v", err)
+		return nil, fmt.Errorf("error adding the rules: %v", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 
 	return body, err
+}
+
+func deleteRule(ruleID string) error {
+	// TODO - implement
+	return errors.New("error: not implemented")
 }
