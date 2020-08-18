@@ -64,34 +64,45 @@ func main() {
 	}
 	defer jsonFile.Close()
 
-	byteValue, _ := ioutil.ReadAll(jsonFile)
+	//byteValue, _ := ioutil.ReadAll(jsonFile)
 	//fmt.Println("twitterRules: ", twitterRules)
 
 	// 2 - add the rules
-	body, err := AddRules(byteValue, false)
-	if err != nil {
-		fmt.Errorf("error reading the response: %v", err)
-	}
+	//body, err := AddRules(byteValue, false)
+	//if err != nil {
+	//	fmt.Errorf("error reading the response: %v", err)
+	//}
+	//
 
-	var rules interface{}
-	if err := json.Unmarshal(body, &rules); err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("rules: ", rules)
 
 	// 3 - check/verify the rules
 
 	// 4 - subscribe to the feed
 
 	//idsToDelete := []string{
-	//	"1165037377523306498",
-	//	"1165037377523306499",
+	//	"1295539185877692417",
+	//	"1295539185877692418",
 	//}
 	//
-	//e := DeleteStreamRules(idsToDelete)
+	//body, e := DeleteStreamRules(idsToDelete)
 	//if e != nil {
 	//	log.Fatal(e)
 	//}
+
+	body, e := CheckCurrentRules()
+	if e != nil {
+		log.Fatal(e)
+	}
+
+	prettyPrintRules(body)
+}
+
+func prettyPrintRules(body []byte) {
+	var rules interface{}
+	if err := json.Unmarshal(body, &rules); err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("rules: ", rules)
 }
 
 func FetchStream() ([]byte, error) {
@@ -108,18 +119,30 @@ func FetchStream() ([]byte, error) {
 	return nil, errors.New("error: not implemented")
 }
 
-func CheckRules() ([]byte, error) {
+func CheckCurrentRules() ([]byte, error) {
 	bearerToken := "Bearer " + apiToken
 	req, err := http.NewRequest(http.MethodGet, rulesURL, nil)
 	req.Header.Add("Authorization", bearerToken)
 	req.Header.Add("Content-type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
 
 	if err != nil {
 		return nil, fmt.Errorf("error fetching the feed rules: %v", err)
 	}
 
 	// TODO - implement
-	return nil, errors.New("error: not implemented")
+	//return nil, errors.New("error: not implemented")
+
+	//if err != nil {
+	//	return nil, fmt.Errorf("error fetching the rules: %v", err)
+	//}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+
+	return body, err
 }
 
 // AddRules adds new rules for the stream. `dryRun` is used to verify the rules, but not persist them
@@ -150,30 +173,38 @@ func AddRules(jsonBody []byte, dryRun bool) ([]byte, error) {
 	return body, err
 }
 
-func DeleteStreamRules(ruleIDs DeleteIDs) error {
+func DeleteStreamRules(ruleIDs DeleteIDs) ([]byte, error) {
 	fmt.Println("deleteRules: ", ruleIDs)
 	if len(ruleIDs) == 0 {
-		return errors.New("you must pass in stream rule ids to delete")
+		return nil, errors.New("you must pass in stream rule ids to delete")
 	}
 
 	bearerToken := "Bearer " + apiToken
 
-	ids := map[string]DeleteIDs{"IDs": ruleIDs}
+	ids := map[string]DeleteIDs{"ids": ruleIDs}
 
 	rulesToDelete := DeleteRules{Delete: ids}
 
 	rulesToDeleteJSON, err := json.Marshal(rulesToDelete)
 	if err != nil {
-		return fmt.Errorf("error converting the rules to a slice of bytes: %v", err)
+		return nil, fmt.Errorf("error converting the rules to a slice of bytes: %v", err)
 	}
+
+	//fmt.Println("rulesToDeleteJSON: ", string(rulesToDeleteJSON))
 
 	req, err := http.NewRequest(http.MethodPost, rulesURL, bytes.NewBuffer(rulesToDeleteJSON))
 	req.Header.Add("Authorization", bearerToken)
 	req.Header.Add("Content-type", "application/json")
 
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	defer resp.Body.Close()
+
 	if err != nil {
-		return fmt.Errorf("error deleting the rules: %v", err)
+		return nil, fmt.Errorf("error deleting the rules: %v", err)
 	}
 
-	return nil
+	body, err := ioutil.ReadAll(resp.Body)
+
+	return body, nil
 }
