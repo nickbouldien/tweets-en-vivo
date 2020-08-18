@@ -1,7 +1,5 @@
 {
   "add": [
-    {"value": "cat has:media", "tag": "cats with media"},
-    {"value": "meme", "tag": "funny things"},
-    {"value": "meme has:images"}
+    {"value": "from:twitterdev"}
   ]
 }
