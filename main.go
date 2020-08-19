@@ -10,14 +10,14 @@ import (
 	"os"
 	"path"
 
-	"github.com/nickbouldien/tweets-en-vivo/twitter"
+	"tweets-en-vivo/twitter"
 )
 
 const ApiToken = "API_TOKEN"
 
 var apiToken string
 
-type DeleteIDs []string
+//type DeleteIDs []string
 
 type Tweet struct {
 	ID string `json:"id"`
@@ -74,7 +74,7 @@ func main() {
 		if err != nil {
 			log.Fatal("error reading the response", err)
 		}
-		twitter.prettyPrint(body)
+		twitter.PrettyPrint(body)
 	case "check":
 		// check/verify the rules
 		fmt.Println("check")
@@ -94,7 +94,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		twitter.prettyPrint(body)
+		twitter.PrettyPrint(body)
 	case "delete-all":
 		// TODO - implement delete all
 		fmt.Println("delete-all")
@@ -106,7 +106,7 @@ func main() {
 
 		var checkResponse CheckRulesResponse
 
-		twitter.prettyPrint(body)
+		twitter.PrettyPrint(body)
 
 		err := json.Unmarshal(body, &checkResponse)
 		if err != nil {
@@ -115,7 +115,7 @@ func main() {
 
 		fmt.Println("checkResponse: ", checkResponse)
 
-		var idsToDelete DeleteIDs
+		var idsToDelete twitter.DeleteIDs
 		for i, v := range checkResponse.Data {
 			fmt.Printf("i: %d, v: %v", i, v)
 			idsToDelete = append(idsToDelete, v.ID)
@@ -126,7 +126,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		twitter.prettyPrint(resBody)
+		twitter.PrettyPrint(resBody)
 	case "help":
 		// show the available commands / options
 		// TODO - implement
@@ -143,7 +143,7 @@ func main() {
 
 		select {
 		case result := <-ch:
-			twitter.prettyPrint(result)
+			twitter.PrettyPrint(result)
 		//case <-"done":
 		// TODO - implement
 		//	fmt.Println("ending stream.")

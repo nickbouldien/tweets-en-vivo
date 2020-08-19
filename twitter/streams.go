@@ -60,7 +60,7 @@ func FetchStream(ch chan<- []byte) {
 			//
 			fmt.Println("data is empty")
 		}
-		prettyPrint(data)
+		PrettyPrint(data)
 
 		//select {
 		//// send messages, data, or errors
