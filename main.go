@@ -1,12 +1,14 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
 	"github.com/joho/godotenv"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -14,13 +16,12 @@ import (
 	"path"
 )
 
-const ApiKey = "API_KEY"
-const ApiSecret = "API_SECRET"
-const ApiToken = "API_TOKEN"
-
-const baseURL = "https://api.twitter.com/2"
-const rulesURL = baseURL + "/tweets/search/stream/rules"
-const streamURL = baseURL + "/tweets/search/stream"
+const (
+	ApiToken = "API_TOKEN"
+	baseURL = "https://api.twitter.com/2"
+	rulesURL = baseURL + "/tweets/search/stream/rules"
+	streamURL = baseURL + "/tweets/search/stream"
+)
 
 var apiToken string
 
@@ -48,16 +49,9 @@ func main() {
 	//	os.Exit(1)
 	//}
 
-	apiKey := os.Getenv(ApiKey)
-	apiSecret := os.Getenv(ApiSecret)
 	apiToken = os.Getenv(ApiToken)
 
-	// TODO - remove these println statements
-	fmt.Println("apiKey: ", apiKey)
-	fmt.Println("apiSecret: ", apiSecret)
-	fmt.Println("apiToken: ", apiToken)
-
-	if apiKey == "" || apiSecret == "" || apiToken == "" {
+	if apiToken == "" {
 		log.Fatal(`make sure that you have filled in the required
 				twitter api credentials in the .env file`)
 	}
@@ -82,7 +76,7 @@ func main() {
 		if err != nil {
 			log.Fatal("error reading the response", err)
 		}
-		prettyPrintRules(body)
+		prettyPrint(body)
 	case "check":
 		// check/verify the rules
 		fmt.Println("check")
@@ -90,59 +84,121 @@ func main() {
 		if e != nil {
 			log.Fatal(e)
 		}
+		prettyPrint(body)
+	case "delete":
+		// TODO - implement delete (get the ids from the command line args)
+		idsToDelete := []string{
+			"1295539185877692419",
+			"1295883610038374402",
+		}
 
-		prettyPrintRules(body)
+		body, err := DeleteStreamRules(idsToDelete)
+		if err != nil {
+			log.Fatal(err)
+		}
+		prettyPrint(body)
+	case "delete-all":
+		// TODO - implement delete all
+		fmt.Println("delete-all")
+	case "help":
+		// show the available commands / options
+		// TODO - implement
+		fmt.Println("help")
+		return
 	case "stream":
 		// subscribe to the feed
 		// TODO - implement
 		fmt.Println("stream")
-		return
-	case "delete":
-		// TODO - implement delete (get the ids from the command line args)
-		idsToDelete := []string{
-			"1295539185877692417",
-			"1295539185877692418",
+
+		ch := make(chan []byte)
+
+		FetchStream(ch)
+
+		select {
+		case result := <-ch:
+			prettyPrint(result)
+		//case <-time.After(time.Second * 10):
+		//	fmt.Println("Server is busy.")
+		//	<-ch
 		}
 
-		body, e := DeleteStreamRules(idsToDelete)
-		if e != nil {
-			log.Fatal(e)
-		}
-		prettyPrintRules(body)
+		//prettyPrint(body)
 	default:
 		fmt.Println("the available commands are `add`, `check`, and `stream`")
 		os.Exit(1)
 	}
 }
 
-func prettyPrintRules(body []byte) {
-	// TODO - clean this up
-	var rules bytes.Buffer
-	if err := json.Indent(&rules, body,"","\t"); err != nil {
-		log.Fatal(err)
-	}
-	//error := json.Indent(&rules, body, "", "\t")
-
-	//prettyJSON, err := json.MarshalIndent(rules, "", "    ")
-	//if error != nil {
-	//	log.Fatal("Failed to generate json", err)
-	//}
-	fmt.Printf("%s\n", string(rules.Bytes()))
-}
-
 // FetchStream gets the twitter stream of tweets that match the current rules
-func FetchStream() ([]byte, error) {
+func FetchStream(ch chan<- []byte) {
 	bearerToken := "Bearer " + apiToken
-	req, err := http.NewRequest(http.MethodGet, streamURL, nil)
+	req, _ := http.NewRequest(http.MethodGet, streamURL, nil)
 	req.Header.Add("Authorization", bearerToken)
 	req.Header.Add("Content-type", "application/json")
 
-	if err != nil {
-		return nil, fmt.Errorf("error fetching the stream: %v", err)
+	client := &http.Client{}
+	resp, _ := client.Do(req)
+
+	defer resp.Body.Close()
+
+	reader := bufio.NewReader(resp.Body)
+
+	for {
+		data, err := read(*reader)
+
+		if err != nil {
+			return
+		}
+		if len(data) == 0 {
+			//
+			fmt.Println("data is empty")
+		}
+		prettyPrint(data)
+
+		//select {
+		//// send messages, data, or errors
+		//case ch <- data:
+		//	fmt.Println("sent data")
+		//	continue
+		////case <-"done":
+		////	return
+		//}
 	}
 
-	// TODO - implement
-	return nil, errors.New("error: not implemented")
+	//return data, err
+	//prettyPrint(data)
+}
+
+func read(reader bufio.Reader) ([]byte, error) {
+	buffer := new(bytes.Buffer)
+
+	//for {
+		line, err := reader.ReadBytes('\n')
+		//prettyPrint(line)
+
+		if err != nil && err != io.EOF {
+			// all errors other than the end of file error
+			return nil, err
+		}
+		if err == io.EOF && len(line) == 0 {
+			if buffer.Len() == 0 {
+				return nil, err
+			}
+			//break
+		}
+		buffer.Write(line)
+	//}
+	return buffer.Bytes(), nil
+}
+
+func prettyPrint(data []byte) {
+	// TODO - clean this up
+	var rules bytes.Buffer
+	if err := json.Indent(&rules, data,"","\t"); err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("%s\n", string(rules.Bytes()))
 }
 
 // CheckCurrentRules fetches the current rules that are persisted
@@ -179,7 +235,7 @@ func AddRules(jsonBody []byte, dryRun bool) ([]byte, error) {
 	req.Header.Add("Authorization", bearerToken)
 	req.Header.Add("Content-type", "application/json")
 
-	fmt.Println("req: ", req)
+	//fmt.Println("req: ", req)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
