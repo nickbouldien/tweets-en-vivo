@@ -55,102 +55,126 @@ func main() {
 	switch *command {
 	case "add":
 		fmt.Println("add")
-		// import the rules json file
-		jsonFile, err := os.Open(path.Join("rules/", *file))
-		if err != nil {
-			log.Fatal("could not open the json file", err)
-		}
-		defer jsonFile.Close()
-
-		byteValue, err := ioutil.ReadAll(jsonFile)
-		if err != nil {
-			log.Fatal("could not read the json", err)
-		}
-
-		// add the rules
-		body, err := AddRules(client, byteValue, false)
-		if err != nil {
-			log.Fatal("error reading the response", err)
-		}
-		PrettyPrint(body)
+		handleAddRulesCommand(client, *file)
 	case "check":
 		// check/verify the rules
 		fmt.Println("check")
-		body, e := CheckCurrentRules(client)
-		if e != nil {
-			log.Fatal(e)
-		}
-		PrettyPrint(body)
+		handleCheckRulesCommand(client)
 	case "delete":
-		// TODO - implement delete (get the ids from the command line args)
-		idsToDelete := []string{
-			"1295539185877692419",
-			"1295883610038374402",
-		}
-
-		body, err := DeleteStreamRules(client, idsToDelete)
-		if err != nil {
-			log.Fatal(err)
-		}
-		PrettyPrint(body)
+		// delete the rules with ids passed in as args
+		fmt.Println("delete")
+		handleDeleteCommand(client)
 	case "delete-all":
-		// TODO - implement delete all
+		// delete all of the current rules
 		fmt.Println("delete-all")
-		// get all the current rule ids
-		body, e := CheckCurrentRules(client)
-		if e != nil {
-			log.Fatal(e)
-		}
-
-		var checkResponse CheckRulesResponse
-
-		PrettyPrint(body)
-
-		err := json.Unmarshal(body, &checkResponse)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		fmt.Println("checkResponse: ", checkResponse)
-
-		var idsToDelete TweetIDs
-		for i, v := range checkResponse.Data {
-			fmt.Printf("i: %d, v: %v", i, v)
-			idsToDelete = append(idsToDelete, v.ID)
-		}
-		fmt.Println("idsToDelete: ", idsToDelete)
-
-		resBody, err := DeleteStreamRules(client, idsToDelete)
-		if err != nil {
-			log.Fatal(err)
-		}
-		PrettyPrint(resBody)
+		handleDeleteAllCommand(client)
 	case "help":
 		// show the available commands / options
-		// TODO - implement
-		fmt.Println("help")
+		handleHelpCommand()
 		return
 	case "stream":
 		// subscribe to the feed
-		// TODO - implement
 		fmt.Println("stream")
-
-		ch := make(chan []byte)
-
-		FetchStream(client, ch)
-
-		select {
-		case result := <-ch:
-			PrettyPrint(result)
-		//case <-"done":
-		// TODO - implement
-		//	fmt.Println("ending stream.")
-		//	close(ch)
-		}
-
-		//prettyPrint(body)
+		handleStreamCommand(client)
 	default:
 		fmt.Println("--> the available commands are `add`, `check`, `delete`, `delete-all`, and `stream`")
 		os.Exit(1)
 	}
+}
+
+func handleStreamCommand(client Client) {
+	ch := make(chan []byte)
+
+	FetchStream(client, ch)
+
+	select {
+	case result := <-ch:
+		PrettyPrint(result)
+		//case <-"done":
+		// TODO - implement
+		//	fmt.Println("ending stream.")
+		//	close(ch)
+	}
+
+	//prettyPrint(body)
+}
+
+func handleAddRulesCommand(client Client, file string) {
+	// import the rules json file
+	jsonFile, err := os.Open(path.Join("rules/", file))
+	if err != nil {
+		log.Fatal("could not open the json file", err)
+	}
+	defer jsonFile.Close()
+
+	byteValue, err := ioutil.ReadAll(jsonFile)
+	if err != nil {
+		log.Fatal("could not read the json", err)
+	}
+
+	// add the rules
+	body, err := AddRules(client, byteValue, false)
+	if err != nil {
+		log.Fatal("error reading the response", err)
+	}
+	PrettyPrint(body)
+}
+
+func handleCheckRulesCommand(client Client) {
+	body, e := CheckCurrentRules(client)
+	if e != nil {
+		log.Fatal(e)
+	}
+	PrettyPrint(body)
+}
+
+func handleDeleteCommand(client Client) {
+	// TODO - implement delete (get the ids from the command line args)
+	idsToDelete := []string{
+		"1295539185877692419",
+		"1295883610038374402",
+	}
+
+	body, err := DeleteStreamRules(client, idsToDelete)
+	if err != nil {
+		log.Fatal(err)
+	}
+	PrettyPrint(body)
+}
+
+func handleDeleteAllCommand(client Client) {
+	// first: get all the current rule ids
+	body, e := CheckCurrentRules(client)
+	if e != nil {
+		log.Fatal(e)
+	}
+
+	var currentStreamRules CheckRulesResponse
+
+	PrettyPrint(body)
+
+	err := json.Unmarshal(body, &currentStreamRules)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("checkResponse: ", currentStreamRules)
+
+	var idsToDelete TweetIDs
+	for i, v := range currentStreamRules.Data {
+		fmt.Printf("i: %d, v: %v", i, v)
+		idsToDelete = append(idsToDelete, v.ID)
+	}
+	fmt.Println("idsToDelete: ", idsToDelete)
+
+	resBody, err := DeleteStreamRules(client, idsToDelete)
+	if err != nil {
+		log.Fatal(err)
+	}
+	PrettyPrint(resBody)
+}
+
+func handleHelpCommand() {
+	// TODO - implement
+	fmt.Println("help")
 }
