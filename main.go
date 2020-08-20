@@ -14,11 +14,6 @@ import (
 
 const ApiToken = "API_TOKEN"
 
-type CheckRulesResponse struct {
-	Data []Tweet `json:"data"`
-	Meta map[string]string `json:"meta"`
-}
-
 type Client struct {
 	ApiToken string
 	httpClient *http.Client
@@ -36,11 +31,6 @@ func main() {
 
 	fmt.Println("--> file:", *file)
 	fmt.Println("--> command:", *command)
-
-	//if flag.NArg() < 1 {
-	//	fmt.Printf("usage:\n\t%s \"tweets-en-vivo\"\n", os.Args[0])
-	//	os.Exit(1)
-	//}
 
 	client := Client{
 		 os.Getenv(ApiToken),
@@ -77,7 +67,8 @@ func main() {
 		fmt.Println("stream")
 		handleStreamCommand(client)
 	default:
-		fmt.Println("--> the available commands are `add`, `check`, `delete`, `delete-all`, and `stream`")
+		fmt.Println(`--> the available commands are: 
+				"add", "check", "delete", "delete-all", and "stream"`)
 		os.Exit(1)
 	}
 }

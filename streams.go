@@ -18,6 +18,11 @@ const (
 	streamURL = baseURL + "/tweets/search/stream"
 )
 
+type CheckRulesResponse struct {
+	Data []Tweet `json:"data"`
+	Meta map[string]string `json:"meta"`
+}
+
 type TweetIDs []string
 
 type DeleteRules struct {
