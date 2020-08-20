@@ -1,4 +1,4 @@
-package twitter
+package main
 
 import (
 	"bufio"
@@ -18,12 +18,10 @@ const (
 	streamURL = baseURL + "/tweets/search/stream"
 )
 
-var apiToken string
-
-type DeleteIDs []string
+type TweetIDs []string
 
 type DeleteRules struct {
-	Delete map[string]DeleteIDs `json:"delete"`
+	Delete map[string]TweetIDs `json:"delete"`
 }
 
 type Tweet struct {
@@ -31,20 +29,15 @@ type Tweet struct {
 	Value string `json:"value"`
 }
 
-type CheckRulesResponse struct {
-	Data []Tweet `json:"data"`
-	Meta map[string]string `json:"meta"`
-}
-
-// FetchStream gets the twitter stream of tweets that match the current rules
-func FetchStream(ch chan<- []byte) {
-	bearerToken := "Bearer " + apiToken
+// FetchStream gets the main stream of tweets that match the current rules
+func FetchStream(client Client, ch chan<- []byte) {
+	bearerToken := "Bearer " + client.ApiToken
 	req, _ := http.NewRequest(http.MethodGet, streamURL, nil)
 	req.Header.Add("Authorization", bearerToken)
 	req.Header.Add("Content-type", "application/json")
 
-	client := &http.Client{}
-	resp, _ := client.Do(req)
+
+	resp, _ := client.httpClient.Do(req)
 
 	defer resp.Body.Close()
 
@@ -109,14 +102,13 @@ func PrettyPrint(data []byte) {
 }
 
 // CheckCurrentRules fetches the current rules that are persisted
-func CheckCurrentRules() ([]byte, error) {
-	bearerToken := "Bearer " + apiToken
+func CheckCurrentRules(client Client) ([]byte, error) {
+	bearerToken := "Bearer " + client.ApiToken
 	req, err := http.NewRequest(http.MethodGet, rulesURL, nil)
 	req.Header.Add("Authorization", bearerToken)
 	req.Header.Add("Content-type", "application/json")
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := client.httpClient.Do(req)
 
 	if err != nil {
 		return nil, fmt.Errorf("error fetching the feed rules: %v", err)
@@ -130,8 +122,8 @@ func CheckCurrentRules() ([]byte, error) {
 }
 
 // AddRules adds new rules for the stream. `dryRun` is used to verify the rules, but not persist them
-func AddRules(jsonBody []byte, dryRun bool) ([]byte, error) {
-	bearerToken := "Bearer " + apiToken
+func AddRules(client Client, jsonBody []byte, dryRun bool) ([]byte, error) {
+	bearerToken := "Bearer " + client.ApiToken
 
 	url := rulesURL
 	if dryRun {
@@ -142,10 +134,7 @@ func AddRules(jsonBody []byte, dryRun bool) ([]byte, error) {
 	req.Header.Add("Authorization", bearerToken)
 	req.Header.Add("Content-type", "application/json")
 
-	//fmt.Println("req: ", req)
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := client.httpClient.Do(req)
 
 	if err != nil {
 		return nil, fmt.Errorf("error adding the rules: %v", err)
@@ -158,15 +147,15 @@ func AddRules(jsonBody []byte, dryRun bool) ([]byte, error) {
 }
 
 // DeleteStreamRules deletes persisted rules by rule id
-func DeleteStreamRules(ruleIDs DeleteIDs) ([]byte, error) {
+func DeleteStreamRules(client Client, ruleIDs TweetIDs) ([]byte, error) {
 	fmt.Println("deleteRules: ", ruleIDs)
 	if len(ruleIDs) == 0 {
 		return nil, errors.New("you must pass in stream rule ids to delete")
 	}
 
-	bearerToken := "Bearer " + apiToken
+	bearerToken := "Bearer " + client.ApiToken
 
-	ids := map[string]DeleteIDs{"ids": ruleIDs}
+	ids := map[string]TweetIDs{"ids": ruleIDs}
 
 	rulesToDelete := DeleteRules{Delete: ids}
 
@@ -179,8 +168,7 @@ func DeleteStreamRules(ruleIDs DeleteIDs) ([]byte, error) {
 	req.Header.Add("Authorization", bearerToken)
 	req.Header.Add("Content-type", "application/json")
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := client.httpClient.Do(req)
 	defer resp.Body.Close()
 
 	if err != nil {

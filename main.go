@@ -7,26 +7,21 @@ import (
 	"github.com/joho/godotenv"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"path"
-
-	"tweets-en-vivo/twitter"
 )
 
 const ApiToken = "API_TOKEN"
 
-var apiToken string
-
-//type DeleteIDs []string
-
-type Tweet struct {
-	ID string `json:"id"`
-	Value string `json:"value"`
-}
-
 type CheckRulesResponse struct {
 	Data []Tweet `json:"data"`
 	Meta map[string]string `json:"meta"`
+}
+
+type Client struct {
+	ApiToken string
+	httpClient *http.Client
 }
 
 func main() {
@@ -47,11 +42,14 @@ func main() {
 	//	os.Exit(1)
 	//}
 
-	apiToken = os.Getenv(ApiToken)
+	client := Client{
+		 os.Getenv(ApiToken),
+		 &http.Client{},
+	}
 
-	if apiToken == "" {
+	if client.ApiToken == "" {
 		log.Fatal(`make sure that you have filled in the required
-				twitter api credentials in the .env file`)
+				main api credentials in the .env file`)
 	}
 
 	switch *command {
@@ -70,19 +68,19 @@ func main() {
 		}
 
 		// add the rules
-		body, err := twitter.AddRules(byteValue, false)
+		body, err := AddRules(client, byteValue, false)
 		if err != nil {
 			log.Fatal("error reading the response", err)
 		}
-		twitter.PrettyPrint(body)
+		PrettyPrint(body)
 	case "check":
 		// check/verify the rules
 		fmt.Println("check")
-		body, e := twitter.CheckCurrentRules()
+		body, e := CheckCurrentRules(client)
 		if e != nil {
 			log.Fatal(e)
 		}
-		twitter.PrettyPrint(body)
+		PrettyPrint(body)
 	case "delete":
 		// TODO - implement delete (get the ids from the command line args)
 		idsToDelete := []string{
@@ -90,23 +88,23 @@ func main() {
 			"1295883610038374402",
 		}
 
-		body, err := twitter.DeleteStreamRules(idsToDelete)
+		body, err := DeleteStreamRules(client, idsToDelete)
 		if err != nil {
 			log.Fatal(err)
 		}
-		twitter.PrettyPrint(body)
+		PrettyPrint(body)
 	case "delete-all":
 		// TODO - implement delete all
 		fmt.Println("delete-all")
 		// get all the current rule ids
-		body, e :=twitter.CheckCurrentRules()
+		body, e := CheckCurrentRules(client)
 		if e != nil {
 			log.Fatal(e)
 		}
 
 		var checkResponse CheckRulesResponse
 
-		twitter.PrettyPrint(body)
+		PrettyPrint(body)
 
 		err := json.Unmarshal(body, &checkResponse)
 		if err != nil {
@@ -115,18 +113,18 @@ func main() {
 
 		fmt.Println("checkResponse: ", checkResponse)
 
-		var idsToDelete twitter.DeleteIDs
+		var idsToDelete TweetIDs
 		for i, v := range checkResponse.Data {
 			fmt.Printf("i: %d, v: %v", i, v)
 			idsToDelete = append(idsToDelete, v.ID)
 		}
 		fmt.Println("idsToDelete: ", idsToDelete)
 
-		resBody, err := twitter.DeleteStreamRules(idsToDelete)
+		resBody, err := DeleteStreamRules(client, idsToDelete)
 		if err != nil {
 			log.Fatal(err)
 		}
-		twitter.PrettyPrint(resBody)
+		PrettyPrint(resBody)
 	case "help":
 		// show the available commands / options
 		// TODO - implement
@@ -139,11 +137,11 @@ func main() {
 
 		ch := make(chan []byte)
 
-		twitter.FetchStream(ch)
+		FetchStream(client, ch)
 
 		select {
 		case result := <-ch:
-			twitter.PrettyPrint(result)
+			PrettyPrint(result)
 		//case <-"done":
 		// TODO - implement
 		//	fmt.Println("ending stream.")
