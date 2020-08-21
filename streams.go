@@ -41,7 +41,6 @@ func FetchStream(client Client, ch chan<- []byte) {
 	req.Header.Add("Authorization", bearerToken)
 	req.Header.Add("Content-type", "application/json")
 
-
 	resp, _ := client.httpClient.Do(req)
 
 	defer resp.Body.Close()
@@ -49,52 +48,47 @@ func FetchStream(client Client, ch chan<- []byte) {
 	reader := bufio.NewReader(resp.Body)
 
 	for {
-		data, err := read(*reader)
+		buffer := new(bytes.Buffer)
 
-		if err != nil {
-			return
-		}
-		if len(data) == 0 {
-			//
-			fmt.Println("data is empty")
-		}
-		PrettyPrint(data)
+		line, err := reader.ReadBytes('\n')
 
-		//select {
-		//// send messages, data, or errors
-		//case ch <- data:
-		//	fmt.Println("sent data")
-		//	continue
-		////case <-"done":
-		////	return
-		//}
+		if err != nil && err != io.EOF {
+			// all errors other than the end of file error
+			log.Fatal(err)
+		}
+		if err == io.EOF && len(line) == 0 {
+			if buffer.Len() == 0 {
+				log.Fatal(err)
+			}
+			break
+		}
+		buffer.Write(line)
+
+		ch <- buffer.Bytes()
 	}
-
-	//return data, err
-	//prettyPrint(data)
 }
 
-func read(reader bufio.Reader) ([]byte, error) {
-	buffer := new(bytes.Buffer)
-
-	//for {
-	line, err := reader.ReadBytes('\n')
-	//prettyPrint(line)
-
-	if err != nil && err != io.EOF {
-		// all errors other than the end of file error
-		return nil, err
-	}
-	if err == io.EOF && len(line) == 0 {
-		if buffer.Len() == 0 {
-			return nil, err
-		}
-		//break
-	}
-	buffer.Write(line)
-	//}
-	return buffer.Bytes(), nil
-}
+//func read(reader bufio.Reader) ([]byte, error) {
+//	buffer := new(bytes.Buffer)
+//
+//	//for {
+//	line, err := reader.ReadBytes('\n')
+//	//prettyPrint(line)
+//
+//	if err != nil && err != io.EOF {
+//		// all errors other than the end of file error
+//		return nil, err
+//	}
+//	if err == io.EOF && len(line) == 0 {
+//		if buffer.Len() == 0 {
+//			return nil, err
+//		}
+//		//break
+//	}
+//	buffer.Write(line)
+//	//}
+//	return buffer.Bytes(), nil
+//}
 
 func PrettyPrint(data []byte) {
 	// TODO - clean this up

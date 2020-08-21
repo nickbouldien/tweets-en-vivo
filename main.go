@@ -74,18 +74,22 @@ func main() {
 }
 
 func handleStreamCommand(client Client) {
-	ch := make(chan []byte)
+	ch := make(chan []byte, 100)
 
-	FetchStream(client, ch)
+	go FetchStream(client, ch)
 
-	select {
-	case result := <-ch:
-		PrettyPrint(result)
-		//case <-"done":
-		// TODO - implement
-		//	fmt.Println("ending stream.")
-		//	close(ch)
+	for  {
+		select {
+		case result := <-ch:
+			fmt.Println("got data!!!")
+			PrettyPrint(result)
+			//case <-"done":
+			// TODO - implement
+			//	fmt.Println("ending stream.")
+			//	close(ch)
+		}
 	}
+
 
 	//prettyPrint(body)
 }
