@@ -36,10 +36,8 @@ type Tweet struct {
 
 // FetchStream gets the main stream of tweets that match the current rules
 func FetchStream(client Client, ch chan<- []byte) {
-	bearerToken := "Bearer " + client.ApiToken
 	req, _ := http.NewRequest(http.MethodGet, streamURL, nil)
-	req.Header.Add("Authorization", bearerToken)
-	req.Header.Add("Content-type", "application/json")
+	req.Header.Add("Authorization", client.ApiToken)
 
 	resp, _ := client.httpClient.Do(req)
 
@@ -48,47 +46,40 @@ func FetchStream(client Client, ch chan<- []byte) {
 	reader := bufio.NewReader(resp.Body)
 
 	for {
-		buffer := new(bytes.Buffer)
+		data, err := read(*reader)
 
-		line, err := reader.ReadBytes('\n')
-
-		if err != nil && err != io.EOF {
-			// all errors other than the end of file error
-			log.Fatal(err)
-		}
-		if err == io.EOF && len(line) == 0 {
-			if buffer.Len() == 0 {
-				log.Fatal(err)
-			}
+		if err != nil {
+			_ = fmt.Errorf("error reading the twitter stream: %v", err)
 			break
 		}
-		buffer.Write(line)
 
-		ch <- buffer.Bytes()
+		if len(data) == 0 {
+			fmt.Println("the data is empty")
+		}
+
+		// send the data over the channel
+		ch <- data
 	}
 }
 
-//func read(reader bufio.Reader) ([]byte, error) {
-//	buffer := new(bytes.Buffer)
-//
-//	//for {
-//	line, err := reader.ReadBytes('\n')
-//	//prettyPrint(line)
-//
-//	if err != nil && err != io.EOF {
-//		// all errors other than the end of file error
-//		return nil, err
-//	}
-//	if err == io.EOF && len(line) == 0 {
-//		if buffer.Len() == 0 {
-//			return nil, err
-//		}
-//		//break
-//	}
-//	buffer.Write(line)
-//	//}
-//	return buffer.Bytes(), nil
-//}
+func read(reader bufio.Reader) ([]byte, error) {
+	buffer := new(bytes.Buffer)
+
+	line, err := reader.ReadBytes('\n')
+
+	if err != nil && err != io.EOF {
+		// all errors other than the end of file error
+		return nil, err
+	}
+	if err == io.EOF && len(line) == 0 {
+		if buffer.Len() == 0 {
+			return nil, err
+		}
+	}
+	buffer.Write(line)
+
+	return buffer.Bytes(), nil
+}
 
 func PrettyPrint(data []byte) {
 	// TODO - clean this up
@@ -102,10 +93,8 @@ func PrettyPrint(data []byte) {
 
 // CheckCurrentRules fetches the current rules that are persisted
 func CheckCurrentRules(client Client) ([]byte, error) {
-	bearerToken := "Bearer " + client.ApiToken
 	req, err := http.NewRequest(http.MethodGet, rulesURL, nil)
-	req.Header.Add("Authorization", bearerToken)
-	req.Header.Add("Content-type", "application/json")
+	req.Header.Add("Authorization", client.ApiToken)
 
 	resp, err := client.httpClient.Do(req)
 
@@ -122,16 +111,13 @@ func CheckCurrentRules(client Client) ([]byte, error) {
 
 // AddRules adds new rules for the stream. `dryRun` is used to verify the rules, but not persist them
 func AddRules(client Client, jsonBody []byte, dryRun bool) ([]byte, error) {
-	bearerToken := "Bearer " + client.ApiToken
-
 	url := rulesURL
 	if dryRun {
 		url = url + "?dry_run=true"
 	}
 
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(jsonBody))
-	req.Header.Add("Authorization", bearerToken)
-	req.Header.Add("Content-type", "application/json")
+	req.Header.Add("Authorization", client.ApiToken)
 
 	resp, err := client.httpClient.Do(req)
 
@@ -152,8 +138,6 @@ func DeleteStreamRules(client Client, ruleIDs TweetIDs) ([]byte, error) {
 		return nil, errors.New("you must pass in stream rule ids to delete")
 	}
 
-	bearerToken := "Bearer " + client.ApiToken
-
 	ids := map[string]TweetIDs{"ids": ruleIDs}
 
 	rulesToDelete := DeleteRules{Delete: ids}
@@ -164,8 +148,7 @@ func DeleteStreamRules(client Client, ruleIDs TweetIDs) ([]byte, error) {
 	}
 
 	req, err := http.NewRequest(http.MethodPost, rulesURL, bytes.NewBuffer(rulesToDeleteJSON))
-	req.Header.Add("Authorization", bearerToken)
-	req.Header.Add("Content-type", "application/json")
+	req.Header.Add("Authorization", client.ApiToken)
 
 	resp, err := client.httpClient.Do(req)
 	defer resp.Body.Close()

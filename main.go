@@ -32,14 +32,15 @@ func main() {
 	fmt.Println("--> file:", *file)
 	fmt.Println("--> command:", *command)
 
-	client := Client{
-		 os.Getenv(ApiToken),
-		 &http.Client{},
-	}
-
-	if client.ApiToken == "" {
+	token := os.Getenv(ApiToken)
+	if token == "" {
 		log.Fatal(`make sure that you have filled in the required
 				main api credentials in the .env file`)
+	}
+
+	client := Client{
+		 fmt.Sprint("Bearer ", token),
+		 &http.Client{},
 	}
 
 	switch *command {
@@ -89,9 +90,6 @@ func handleStreamCommand(client Client) {
 			//	close(ch)
 		}
 	}
-
-
-	//prettyPrint(body)
 }
 
 func handleAddRulesCommand(client Client, file string) {
