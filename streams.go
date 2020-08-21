@@ -14,10 +14,13 @@ import (
 
 const (
 	baseURL = "https://api.twitter.com/2"
-	rulesURL = baseURL + "/tweets/search/stream/rules"
+	rulesURL = streamURL + "/rules"
 	streamURL = baseURL + "/tweets/search/stream"
 )
 
+// FIXME - refactor all of the structs to make clearer and remove duplication
+
+// TODO - rename this
 type CheckRulesResponse struct {
 	Data []Tweet `json:"data"`
 	Meta map[string]string `json:"meta"`
@@ -25,6 +28,7 @@ type CheckRulesResponse struct {
 
 type TweetIDs []string
 
+// TODO - rename this
 type DeleteRules struct {
 	Delete map[string]TweetIDs `json:"delete"`
 }
@@ -32,6 +36,21 @@ type DeleteRules struct {
 type Tweet struct {
 	ID string `json:"id"`
 	Value string `json:"value"`
+}
+
+type MatchingRule struct {
+	ID string `json:"id"`
+	Tag string `json:"tag"`
+}
+
+type StreamTweet struct {
+	ID string `json:"id"`
+	Text string `json:"text"`
+}
+
+type StreamData struct {
+	Data StreamTweet `json:"data"`
+	MatchingRules []MatchingRule `json:"matching_rules"`
 }
 
 // FetchStream gets the main stream of tweets that match the current rules
@@ -81,6 +100,7 @@ func read(reader bufio.Reader) ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
+// PrettyPrint is a helper function to print the data to the terminal with some formatting
 func PrettyPrint(data []byte) {
 	// TODO - clean this up
 	var rules bytes.Buffer
@@ -118,6 +138,7 @@ func AddRules(client Client, jsonBody []byte, dryRun bool) ([]byte, error) {
 
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(jsonBody))
 	req.Header.Add("Authorization", client.ApiToken)
+	req.Header.Add("Content-type", "application/json")
 
 	resp, err := client.httpClient.Do(req)
 
@@ -149,6 +170,7 @@ func DeleteStreamRules(client Client, ruleIDs TweetIDs) ([]byte, error) {
 
 	req, err := http.NewRequest(http.MethodPost, rulesURL, bytes.NewBuffer(rulesToDeleteJSON))
 	req.Header.Add("Authorization", client.ApiToken)
+	req.Header.Add("Content-type", "application/json")
 
 	resp, err := client.httpClient.Do(req)
 	defer resp.Body.Close()

@@ -27,10 +27,13 @@ func main() {
 
 	command := flag.String("command", "stream", "the command you want to perform")
 	file := flag.String("file", "rules.json", "the rules file you want to use (in the rules/ dir)")
+
 	flag.Parse()
+	ruleIDs := flag.Args()
 
 	fmt.Println("--> file:", *file)
 	fmt.Println("--> command:", *command)
+	fmt.Println("--> ruleIDs:", ruleIDs)
 
 	token := os.Getenv(ApiToken)
 	if token == "" {
@@ -54,7 +57,12 @@ func main() {
 	case "delete":
 		// delete the rules with ids passed in as args
 		fmt.Println("delete")
-		handleDeleteCommand(client)
+		//var ids TweetIDs
+		//idsToDelete := []string{
+		//	"1295539185877692419",
+		//	"1295883610038374402",
+		//}
+		handleDeleteCommand(client, ruleIDs)
 	case "delete-all":
 		// delete all of the current rules
 		fmt.Println("delete-all")
@@ -82,11 +90,10 @@ func handleStreamCommand(client Client) {
 	for  {
 		select {
 		case result := <-ch:
-			fmt.Println("got data!!!")
 			PrettyPrint(result)
-			//case <-"done":
+		//case <-"done":
 			// TODO - implement
-			//	fmt.Println("ending stream.")
+			//	fmt.Println("ending the stream")
 			//	close(ch)
 		}
 	}
@@ -121,14 +128,12 @@ func handleCheckRulesCommand(client Client) {
 	PrettyPrint(body)
 }
 
-func handleDeleteCommand(client Client) {
-	// TODO - implement delete (get the ids from the command line args)
-	idsToDelete := []string{
-		"1295539185877692419",
-		"1295883610038374402",
+func handleDeleteCommand(client Client, ids TweetIDs) {
+	if len(ids) == 0 {
+		log.Fatal("you must supply a list of rule ids to delete")
 	}
 
-	body, err := DeleteStreamRules(client, idsToDelete)
+	body, err := DeleteStreamRules(client, ids)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -151,7 +156,7 @@ func handleDeleteAllCommand(client Client) {
 		log.Fatal(err)
 	}
 
-	fmt.Println("checkResponse: ", currentStreamRules)
+	fmt.Println("currentStreamRules: ", currentStreamRules)
 
 	var idsToDelete TweetIDs
 	for i, v := range currentStreamRules.Data {
