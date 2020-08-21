@@ -85,7 +85,7 @@ func main() {
 func handleStreamCommand(client Client) {
 	ch := make(chan []byte, 100)
 
-	go FetchStream(client, ch)
+	go client.FetchStream(ch)
 
 	for  {
 		select {
@@ -113,7 +113,7 @@ func handleAddRulesCommand(client Client, file string) {
 	}
 
 	// add the rules
-	body, err := AddRules(client, byteValue, false)
+	body, err := client.AddRules(byteValue, false)
 	if err != nil {
 		log.Fatal("error reading the response", err)
 	}
@@ -121,7 +121,7 @@ func handleAddRulesCommand(client Client, file string) {
 }
 
 func handleCheckRulesCommand(client Client) {
-	body, e := CheckCurrentRules(client)
+	body, e := client.CheckCurrentRules()
 	if e != nil {
 		log.Fatal(e)
 	}
@@ -133,7 +133,7 @@ func handleDeleteCommand(client Client, ids TweetIDs) {
 		log.Fatal("you must supply a list of rule ids to delete")
 	}
 
-	body, err := DeleteStreamRules(client, ids)
+	body, err := client.DeleteStreamRules(ids)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -142,7 +142,7 @@ func handleDeleteCommand(client Client, ids TweetIDs) {
 
 func handleDeleteAllCommand(client Client) {
 	// first: get all the current rule ids
-	body, e := CheckCurrentRules(client)
+	body, e := client.CheckCurrentRules()
 	if e != nil {
 		log.Fatal(e)
 	}
@@ -165,7 +165,7 @@ func handleDeleteAllCommand(client Client) {
 	}
 	fmt.Println("idsToDelete: ", idsToDelete)
 
-	resBody, err := DeleteStreamRules(client, idsToDelete)
+	resBody, err := client.DeleteStreamRules(idsToDelete)
 	if err != nil {
 		log.Fatal(err)
 	}

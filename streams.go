@@ -6,9 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 )
 
@@ -54,7 +52,7 @@ type StreamData struct {
 }
 
 // FetchStream gets the main stream of tweets that match the current rules
-func FetchStream(client Client, ch chan<- []byte) {
+func (client Client) FetchStream(ch chan<- []byte) {
 	req, _ := http.NewRequest(http.MethodGet, streamURL, nil)
 	req.Header.Add("Authorization", client.ApiToken)
 
@@ -65,7 +63,7 @@ func FetchStream(client Client, ch chan<- []byte) {
 	reader := bufio.NewReader(resp.Body)
 
 	for {
-		data, err := read(*reader)
+		data, err := Read(*reader)
 
 		if err != nil {
 			_ = fmt.Errorf("error reading the twitter stream: %v", err)
@@ -81,38 +79,8 @@ func FetchStream(client Client, ch chan<- []byte) {
 	}
 }
 
-func read(reader bufio.Reader) ([]byte, error) {
-	buffer := new(bytes.Buffer)
-
-	line, err := reader.ReadBytes('\n')
-
-	if err != nil && err != io.EOF {
-		// all errors other than the end of file error
-		return nil, err
-	}
-	if err == io.EOF && len(line) == 0 {
-		if buffer.Len() == 0 {
-			return nil, err
-		}
-	}
-	buffer.Write(line)
-
-	return buffer.Bytes(), nil
-}
-
-// PrettyPrint is a helper function to print the data to the terminal with some formatting
-func PrettyPrint(data []byte) {
-	// TODO - clean this up
-	var rules bytes.Buffer
-	if err := json.Indent(&rules, data,"","\t"); err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Printf("%s\n", string(rules.Bytes()))
-}
-
 // CheckCurrentRules fetches the current rules that are persisted
-func CheckCurrentRules(client Client) ([]byte, error) {
+func (client Client) CheckCurrentRules() ([]byte, error) {
 	req, err := http.NewRequest(http.MethodGet, rulesURL, nil)
 	req.Header.Add("Authorization", client.ApiToken)
 
@@ -130,7 +98,7 @@ func CheckCurrentRules(client Client) ([]byte, error) {
 }
 
 // AddRules adds new rules for the stream. `dryRun` is used to verify the rules, but not persist them
-func AddRules(client Client, jsonBody []byte, dryRun bool) ([]byte, error) {
+func (client Client)  AddRules(jsonBody []byte, dryRun bool) ([]byte, error) {
 	url := rulesURL
 	if dryRun {
 		url = url + "?dry_run=true"
@@ -153,7 +121,7 @@ func AddRules(client Client, jsonBody []byte, dryRun bool) ([]byte, error) {
 }
 
 // DeleteStreamRules deletes persisted rules by rule id
-func DeleteStreamRules(client Client, ruleIDs TweetIDs) ([]byte, error) {
+func (client Client) DeleteStreamRules(ruleIDs TweetIDs) ([]byte, error) {
 	fmt.Println("deleteRules: ", ruleIDs)
 	if len(ruleIDs) == 0 {
 		return nil, errors.New("you must pass in stream rule ids to delete")
