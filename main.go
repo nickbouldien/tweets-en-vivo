@@ -34,8 +34,6 @@ func main() {
 
 	fmt.Println("--> file:", *file)
 	fmt.Println("--> command:", *command)
-	fmt.Println("--> ruleIDs:", ruleIDs)
-	fmt.Println("--> dryRun:", dryRun)
 
 	token := os.Getenv(ApiToken)
 	if token == "" {
@@ -115,19 +113,19 @@ func handleAddRulesCommand(client Client, file string, dryRun bool) {
 	}
 
 	// add the rules
-	body, err := client.AddRules(byteValue, dryRun)
+	rules, err := client.AddRules(byteValue, dryRun)
 	if err != nil {
 		log.Fatal("error reading the response", err)
 	}
-	PrettyPrint(body)
+	PrettyPrint(rules)
 }
 
 func handleCheckRulesCommand(client Client) {
-	body, e := client.CheckCurrentRules()
+	rules, e := client.CheckCurrentRules()
 	if e != nil {
 		log.Fatal(e)
 	}
-	PrettyPrint(body)
+	PrettyPrint(rules)
 }
 
 func handleDeleteCommand(client Client, ids TweetIDs) {
@@ -135,11 +133,11 @@ func handleDeleteCommand(client Client, ids TweetIDs) {
 		log.Fatal("you must supply a list of rule ids to delete")
 	}
 
-	body, err := client.DeleteStreamRules(ids)
+	rules, err := client.DeleteStreamRules(ids)
 	if err != nil {
 		log.Fatal(err)
 	}
-	PrettyPrint(body)
+	PrettyPrint(rules)
 }
 
 func handleDeleteAllCommand(client Client) {
@@ -167,11 +165,11 @@ func handleDeleteAllCommand(client Client) {
 	}
 	fmt.Println("idsToDelete: ", idsToDelete)
 
-	resBody, err := client.DeleteStreamRules(idsToDelete)
+	rules, err := client.DeleteStreamRules(idsToDelete)
 	if err != nil {
 		log.Fatal(err)
 	}
-	PrettyPrint(resBody)
+	PrettyPrint(rules)
 }
 
 func handleHelpCommand() {
