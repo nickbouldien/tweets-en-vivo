@@ -27,6 +27,7 @@ func main() {
 
 	command := flag.String("command", "stream", "the command you want to perform")
 	file := flag.String("file", "rules.json", "the rules file you want to use (in the rules/ dir)")
+	dryRun := flag.Bool("dryRun", false, "true if you want to verify (but not persist) the rules, otherwise false")
 
 	flag.Parse()
 	ruleIDs := flag.Args()
@@ -34,6 +35,7 @@ func main() {
 	fmt.Println("--> file:", *file)
 	fmt.Println("--> command:", *command)
 	fmt.Println("--> ruleIDs:", ruleIDs)
+	fmt.Println("--> dryRun:", dryRun)
 
 	token := os.Getenv(ApiToken)
 	if token == "" {
@@ -49,7 +51,7 @@ func main() {
 	switch *command {
 	case "add":
 		fmt.Println("add")
-		handleAddRulesCommand(client, *file)
+		handleAddRulesCommand(client, *file, *dryRun)
 	case "check":
 		// check/verify the rules
 		fmt.Println("check")
@@ -57,11 +59,6 @@ func main() {
 	case "delete":
 		// delete the rules with ids passed in as args
 		fmt.Println("delete")
-		//var ids TweetIDs
-		//idsToDelete := []string{
-		//	"1295539185877692419",
-		//	"1295883610038374402",
-		//}
 		handleDeleteCommand(client, ruleIDs)
 	case "delete-all":
 		// delete all of the current rules
@@ -89,8 +86,8 @@ func handleStreamCommand(client Client) {
 
 	for  {
 		select {
-		case result := <-ch:
-			PrettyPrint(result)
+		case data := <-ch:
+			handleTweetData(data)
 		//case <-"done":
 			// TODO - implement
 			//	fmt.Println("ending the stream")
@@ -99,7 +96,12 @@ func handleStreamCommand(client Client) {
 	}
 }
 
-func handleAddRulesCommand(client Client, file string) {
+func handleTweetData(data []byte) {
+	// TODO - implement
+	PrettyPrint(data)
+}
+
+func handleAddRulesCommand(client Client, file string, dryRun bool) {
 	// import the rules json file
 	jsonFile, err := os.Open(path.Join("rules/", file))
 	if err != nil {
@@ -113,7 +115,7 @@ func handleAddRulesCommand(client Client, file string) {
 	}
 
 	// add the rules
-	body, err := client.AddRules(byteValue, false)
+	body, err := client.AddRules(byteValue, dryRun)
 	if err != nil {
 		log.Fatal("error reading the response", err)
 	}
@@ -173,6 +175,6 @@ func handleDeleteAllCommand(client Client) {
 }
 
 func handleHelpCommand() {
-	// TODO - implement
+	// TODO - implement (show all of the commands / args)
 	fmt.Println("help")
 }

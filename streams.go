@@ -98,7 +98,7 @@ func (client Client) CheckCurrentRules() ([]byte, error) {
 }
 
 // AddRules adds new rules for the stream. `dryRun` is used to verify the rules, but not persist them
-func (client Client)  AddRules(jsonBody []byte, dryRun bool) ([]byte, error) {
+func (client Client) AddRules(jsonBody []byte, dryRun bool) ([]byte, error) {
 	url := rulesURL
 	if dryRun {
 		url = url + "?dry_run=true"
