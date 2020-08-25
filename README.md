@@ -15,7 +15,11 @@ v2 endpoints
 
 
 ## TODOs
+- write tests!
 - format the printing to terminal
 - create the websocket server
 - create the frontend
 - lots of refactoring/cleanup
+- refactor all of the tweet/response typings
+- make the websocket server cancelable
+

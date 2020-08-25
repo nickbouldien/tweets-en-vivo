@@ -6,6 +6,7 @@
         <h1>websocket test file</h1>
         <h2>connection status: <span id="status">closed</span></h2>
         <div class="messages-container">
+            <p>messages:</p>
             <pre id="messages"></pre>
         </div>
 
@@ -18,7 +19,9 @@
             const status = document.getElementById("status");
             const error = document.getElementById("error");
 
-            const socket = new WebSocket("ws://localhost:5000/ws");
+            const port = 5000;
+            const path = "/ws";
+            const socket = new WebSocket(`ws://localhost:${port}${path}`);
 
             socket.addEventListener('open', function() {
                 console.log('socket opened ', socket.url);
@@ -26,31 +29,20 @@
             });
 
             socket.addEventListener('message', function(event) {
-                console.log('Message from the server ', event.data);
-                output.innerHTML += "Server: " + event.data + "\n";
+                console.info('Message from the server ', event.data);
+                output.innerHTML += `--> ${event.data} \n`;
             });
 
-            // socket.onopen = function() {
-            //     console.log('socket opened ', socket.url);
-            //     status.innerHTML += "connected";
-            // };
-            //
-            // socket.onmessage = function(e) {
-            //     console.log("onmessage: ", e);
-            //     output.innerHTML += "Server: " + e.data + "\n";
-            // };
-
-            socket.onerror = function(err) {
+            socket.addEventListener('error', function(err) {
                 console.error("err: ", err);
-                err.innerHTML = err.toString();
-                // socket.close();
-            }
+                err.innerHTML = `err: ${err.toString()}`;
+            });
 
-            socket.onclose = function() {
-                console.error("socket closed");
+            socket.addEventListener('close', function() {
+                console.warn("socket closed");
                 status.innerHTML = "closed";
-                output.innerHTML += "--> socket closed" + "\n";
-            }
+                output.innerHTML += `--> socket closed \n`;
+            });
         </script>
     </body>
 </html>
