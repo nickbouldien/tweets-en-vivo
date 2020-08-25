@@ -9,7 +9,6 @@ import (
 	"log"
 )
 
-
 func Read(reader bufio.Reader) ([]byte, error) {
 	buf := new(bytes.Buffer)
 

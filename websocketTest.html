@@ -1,0 +1,56 @@
+<html lang="en">
+    <header>
+        <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    </header>
+    <body>
+        <h1>websocket test file</h1>
+        <h2>connection status: <span id="status">closed</span></h2>
+        <div class="messages-container">
+            <pre id="messages"></pre>
+        </div>
+
+        <div class="error-container">
+            <pre id="error"></pre>
+        </div>
+
+        <script>
+            const output = document.getElementById("messages");
+            const status = document.getElementById("status");
+            const error = document.getElementById("error");
+
+            const socket = new WebSocket("ws://localhost:5000/ws");
+
+            socket.addEventListener('open', function() {
+                console.log('socket opened ', socket.url);
+                status.innerHTML = `connected - ${socket.url}`;
+            });
+
+            socket.addEventListener('message', function(event) {
+                console.log('Message from the server ', event.data);
+                output.innerHTML += "Server: " + event.data + "\n";
+            });
+
+            // socket.onopen = function() {
+            //     console.log('socket opened ', socket.url);
+            //     status.innerHTML += "connected";
+            // };
+            //
+            // socket.onmessage = function(e) {
+            //     console.log("onmessage: ", e);
+            //     output.innerHTML += "Server: " + e.data + "\n";
+            // };
+
+            socket.onerror = function(err) {
+                console.error("err: ", err);
+                err.innerHTML = err.toString();
+                // socket.close();
+            }
+
+            socket.onclose = function() {
+                console.error("socket closed");
+                status.innerHTML = "closed";
+                output.innerHTML += "--> socket closed" + "\n";
+            }
+        </script>
+    </body>
+</html>
