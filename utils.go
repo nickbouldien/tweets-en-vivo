@@ -32,10 +32,9 @@ func Read(reader bufio.Reader) ([]byte, error) {
 func PrettyPrint(data []byte) {
 	// TODO - clean this up
 	var rules bytes.Buffer
-	if err := json.Indent(&rules, data,"","\t"); err != nil {
+	if err := json.Indent(&rules, data, "", "\t"); err != nil {
 		log.Fatal(err)
 	}
 
 	fmt.Printf("%s\n", string(rules.Bytes()))
 }
-

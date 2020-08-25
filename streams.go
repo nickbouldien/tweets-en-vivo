@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	baseURL = "https://api.twitter.com/2"
-	rulesURL = streamURL + "/rules"
+	baseURL   = "https://api.twitter.com/2"
+	rulesURL  = streamURL + "/rules"
 	streamURL = baseURL + "/tweets/search/stream"
 )
 
@@ -20,7 +20,7 @@ const (
 
 // TODO - rename this
 type CheckRulesResponse struct {
-	Data []Tweet `json:"data"`
+	Data []Tweet           `json:"data"`
 	Meta map[string]string `json:"meta"`
 }
 
@@ -32,22 +32,22 @@ type DeleteRules struct {
 }
 
 type Tweet struct {
-	ID string `json:"id"`
+	ID    string `json:"id"`
 	Value string `json:"value"`
 }
 
 type MatchingRule struct {
-	ID string `json:"id"`
+	ID  string `json:"id"`
 	Tag string `json:"tag"`
 }
 
 type StreamTweet struct {
-	ID string `json:"id"`
+	ID   string `json:"id"`
 	Text string `json:"text"`
 }
 
 type StreamData struct {
-	Data StreamTweet `json:"data"`
+	Data          StreamTweet    `json:"data"`
 	MatchingRules []MatchingRule `json:"matching_rules"`
 }
 
@@ -80,7 +80,7 @@ func (client Client) FetchStream(ch chan<- []byte) {
 }
 
 // CheckCurrentRules fetches the current rules that are persisted
-func (client Client) CheckCurrentRules() ([]byte, error) {
+func (client Client) FetchCurrentRules() ([]byte, error) {
 	req, err := http.NewRequest(http.MethodGet, rulesURL, nil)
 	req.Header.Add("Authorization", client.ApiToken)
 

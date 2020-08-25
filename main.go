@@ -19,10 +19,10 @@ const ApiToken = "API_TOKEN"
 //const pingPeriod = 3 * time.Second
 
 type Client struct {
-	ApiToken string
+	ApiToken   string
 	httpClient *http.Client
-	ws *websocket.Conn
-	wsChannel chan []byte
+	ws         *websocket.Conn
+	wsChannel  chan []byte
 }
 
 var upgrader = websocket.Upgrader{
@@ -46,7 +46,11 @@ func main() {
 	command := flag.String("command", "stream", "the command you want to perform")
 	file := flag.String("file", "rules.json", "the rules file you want to use (in the rules/ dir)")
 	dryRun := flag.Bool("dryRun", false, "true if you want to verify (but not persist) the rules, otherwise false")
-	createWebsocket := flag.Bool("websocket", false, "true if you want to create a websocket to send the data to a frontend client, otherwise false")
+	createWebsocket := flag.Bool(
+		"websocket",
+		false,
+		"true if you want to create a websocket to send the data to a frontend client, otherwise false",
+	)
 
 	flag.Parse()
 	ruleIDs := flag.Args()
@@ -61,12 +65,12 @@ func main() {
 	}
 
 	client := Client{
-		 fmt.Sprint("Bearer ", token),
-		 &http.Client{
-			 Timeout: 15 * time.Second,
-		 },
-		 nil,
-		 nil,
+		fmt.Sprint("Bearer ", token),
+		&http.Client{
+			Timeout: 15 * time.Second,
+		},
+		nil,
+		nil,
 	}
 
 	var wg sync.WaitGroup
@@ -95,11 +99,10 @@ func main() {
 	case "stream":
 		// subscribe to the feed
 		fmt.Println("stream")
+		fmt.Println("createWebsocket ", *createWebsocket)
 
 		if *createWebsocket {
 			// only start the websocket connection if the -websocket arg is present
-			fmt.Println("createWebsocket ", *createWebsocket)
-
 			http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 				fmt.Println("starting up websocket")
 				ws, err := upgrader.Upgrade(w, r, nil)
@@ -146,14 +149,14 @@ func main() {
 
 func websocketWriter(ws *websocket.Conn, ch <-chan []byte) {
 	defer func() {
-		ws.Close()
+		_ = ws.Close()
 	}()
 
 	for {
 		select {
 		case data := <-ch:
-			//fmt.Println("received data: ", data)
 			if err := ws.WriteMessage(websocket.TextMessage, data); err != nil {
+				_ = fmt.Errorf("error writing the message: %v", err)
 				return
 			}
 		}
@@ -176,7 +179,7 @@ func handleStreamCommand(client Client, wg *sync.WaitGroup) {
 		select {
 		case data := <-ch:
 			handleTweetData(client, data)
-		//case <-"done":
+			//case <-"done":
 			// TODO - implement
 			//	fmt.Println("ending the stream")
 			//	close(ch)
@@ -187,7 +190,7 @@ func handleStreamCommand(client Client, wg *sync.WaitGroup) {
 func handleTweetData(client Client, data []byte) {
 	if client.ws != nil && client.wsChannel != nil {
 		// if there is an open websocket connection, send the data to it
-		client.wsChannel <-data
+		client.wsChannel <- data
 	}
 
 	// print to the terminal
@@ -216,7 +219,7 @@ func handleAddRulesCommand(client Client, file string, dryRun bool) {
 }
 
 func handleCheckRulesCommand(client Client) {
-	rules, e := client.CheckCurrentRules()
+	rules, e := client.FetchCurrentRules()
 	if e != nil {
 		log.Fatal(e)
 	}
@@ -237,7 +240,7 @@ func handleDeleteCommand(client Client, ids TweetIDs) {
 
 func handleDeleteAllCommand(client Client) {
 	// first: get all the current rule ids
-	body, e := client.CheckCurrentRules()
+	body, e := client.FetchCurrentRules()
 	if e != nil {
 		log.Fatal(e)
 	}
