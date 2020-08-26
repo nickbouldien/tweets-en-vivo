@@ -1,0 +1,48 @@
+<html lang="en">
+    <header>
+        <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    </header>
+    <body>
+        <h1>websocket test file</h1>
+        <h2>connection status: <span id="status">closed</span></h2>
+        <div class="messages-container">
+            <p>messages:</p>
+            <pre id="messages"></pre>
+        </div>
+
+        <div class="error-container">
+            <pre id="error"></pre>
+        </div>
+
+        <script>
+            const output = document.getElementById("messages");
+            const status = document.getElementById("status");
+            const error = document.getElementById("error");
+
+            const port = 5000;
+            const path = "/ws";
+            const socket = new WebSocket(`ws://localhost:${port}${path}`);
+
+            socket.addEventListener('open', function() {
+                console.log('socket opened ', socket.url);
+                status.innerHTML = `connected - ${socket.url}`;
+            });
+
+            socket.addEventListener('message', function(event) {
+                console.info('Message from the server ', event.data);
+                output.innerHTML += `--> ${event.data} \n`;
+            });
+
+            socket.addEventListener('error', function(err) {
+                console.error("err: ", err);
+                err.innerHTML = `err: ${err.toString()}`;
+            });
+
+            socket.addEventListener('close', function() {
+                console.warn("socket closed");
+                status.innerHTML = "closed";
+                output.innerHTML += `--> socket closed \n`;
+            });
+        </script>
+    </body>
+</html>

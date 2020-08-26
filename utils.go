@@ -6,9 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 )
-
 
 func Read(reader bufio.Reader) ([]byte, error) {
 	buf := new(bytes.Buffer)
@@ -30,13 +28,11 @@ func Read(reader bufio.Reader) ([]byte, error) {
 }
 
 // PrettyPrint is a helper function to print the data to the terminal with some formatting
-func PrettyPrint(data []byte) {
-	// TODO - clean this up
-	var rules bytes.Buffer
-	if err := json.Indent(&rules, data,"","\t"); err != nil {
-		log.Fatal(err)
+func PrettyPrint(data interface{}) {
+	s, err := json.MarshalIndent(data, "", "\t")
+	if err != nil {
+		_ = fmt.Errorf("error creating the data to print: %v", err)
 	}
 
-	fmt.Printf("%s\n", string(rules.Bytes()))
+	fmt.Println(string(s))
 }
-
