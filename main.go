@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/gorilla/websocket"
@@ -16,6 +15,7 @@ import (
 )
 
 const ApiToken = "API_TOKEN"
+
 //const pingPeriod = 3 * time.Second
 
 type Client struct {
@@ -224,6 +224,7 @@ func handleCheckRulesCommand(client Client) {
 		log.Fatal(e)
 	}
 	PrettyPrint(rules)
+	//return rules
 }
 
 func handleDeleteCommand(client Client, ids TweetIDs) {
@@ -240,28 +241,21 @@ func handleDeleteCommand(client Client, ids TweetIDs) {
 
 func handleDeleteAllCommand(client Client) {
 	// first: get all the current rule ids
-	body, e := client.FetchCurrentRules()
+	currentRules, e := client.FetchCurrentRules()
 	if e != nil {
 		log.Fatal(e)
 	}
 
-	var currentStreamRules CheckRulesResponse
-
-	PrettyPrint(body)
-
-	err := json.Unmarshal(body, &currentStreamRules)
-	if err != nil {
-		log.Fatal(err)
+	printData := map[string][]Tweet{
+		"currentRules": currentRules.Data,
 	}
 
-	fmt.Println("currentStreamRules: ", currentStreamRules)
+	PrettyPrint(printData)
 
 	var idsToDelete TweetIDs
-	for i, v := range currentStreamRules.Data {
-		fmt.Printf("i: %d, v: %v", i, v)
+	for _, v := range currentRules.Data {
 		idsToDelete = append(idsToDelete, v.ID)
 	}
-	fmt.Println("idsToDelete: ", idsToDelete)
 
 	rules, err := client.DeleteStreamRules(idsToDelete)
 	if err != nil {
