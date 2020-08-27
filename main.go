@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/gorilla/websocket"
@@ -178,6 +179,7 @@ func handleStreamCommand(client Client, wg *sync.WaitGroup) {
 	for {
 		select {
 		case data := <-ch:
+			//return &tweets, nil
 			handleTweetData(client, data)
 			//case <-"done":
 			// TODO - implement
@@ -193,8 +195,19 @@ func handleTweetData(client Client, data []byte) {
 		client.wsChannel <- data
 	}
 
+	//PrettyPrint(data)
+
+	
+	var tweet Tweet
+	err := json.Unmarshal(data, &tweet)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// print to the terminal
-	PrettyPrint(data)
+	//PrettyPrint(tweet)
+
+	PrettyPrintByteSlice(data)
 }
 
 func handleAddRulesCommand(client Client, file string, dryRun bool) {

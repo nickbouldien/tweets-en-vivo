@@ -14,7 +14,9 @@ import (
 const (
 	baseURL   = "https://api.twitter.com/2"
 	rulesURL  = streamURL + "/rules"
-	streamURL = baseURL + "/tweets/search/stream"
+	// TODO - make the "expanded fields" in the streamURL optional/expandable
+	streamURL = baseURL + "/tweets/search/stream?tweet.fields=created_at&expansions=author_id"
+
 )
 
 // FIXME - refactor all of the structs to make clearer and remove duplication
