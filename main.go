@@ -15,16 +15,17 @@ import (
 	"time"
 )
 
-const ApiToken = "API_TOKEN"
-
-//const pingPeriod = 3 * time.Second
-
 type Client struct {
 	ApiToken   string
 	httpClient *http.Client
 	ws         *websocket.Conn
 	wsChannel  chan []byte
 }
+
+const (
+	ApiToken = "API_TOKEN"
+	websocketAddr = ":5000"
+)
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
@@ -34,8 +35,6 @@ var upgrader = websocket.Upgrader{
 		return true
 	},
 }
-
-var addr = ":5000"
 
 func main() {
 	if err := godotenv.Load(); err != nil {
@@ -75,23 +74,18 @@ func main() {
 	}
 
 	var wg sync.WaitGroup
-	wg.Add(1)
 
 	switch *command {
 	case "add":
-		fmt.Println("add")
 		handleAddRulesCommand(client, *file, *dryRun)
 	case "check":
 		// check/verify the rules
-		fmt.Println("check")
 		handleCheckRulesCommand(client)
 	case "delete":
 		// delete the rules with ids passed in as args
-		fmt.Println("delete")
 		handleDeleteCommand(client, ruleIDs)
 	case "delete-all":
 		// delete all of the current rules
-		fmt.Println("delete-all")
 		handleDeleteAllCommand(client)
 	case "help":
 		// show the available commands / options
@@ -99,8 +93,7 @@ func main() {
 		return
 	case "stream":
 		// subscribe to the feed
-		fmt.Println("stream")
-		fmt.Println("createWebsocket ", *createWebsocket)
+		fmt.Println("createWebsocket: ", *createWebsocket)
 
 		if *createWebsocket {
 			// only start the websocket connection if the -websocket arg is present
@@ -123,8 +116,6 @@ func main() {
 				client.ws = ws
 				client.wsChannel = make(chan []byte)
 
-				wg.Add(1)
-
 				handleStreamCommand(client, &wg)
 			})
 
@@ -132,11 +123,8 @@ func main() {
 				fmt.Println("http listen and serve")
 				wg.Add(1)
 
-				log.Fatal(http.ListenAndServe(addr, nil))
+				log.Fatal(http.ListenAndServe(websocketAddr, nil))
 			}()
-			//go func() {
-			//	handleStreamCommand(client, &wg)
-			//}()
 		} else {
 			handleStreamCommand(client, &wg)
 		}
@@ -195,17 +183,11 @@ func handleTweetData(client Client, data []byte) {
 		client.wsChannel <- data
 	}
 
-	//PrettyPrint(data)
-
-	
 	var tweet Tweet
 	err := json.Unmarshal(data, &tweet)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	// print to the terminal
-	//PrettyPrint(tweet)
 
 	PrettyPrintByteSlice(data)
 }
@@ -237,7 +219,6 @@ func handleCheckRulesCommand(client Client) {
 		log.Fatal(e)
 	}
 	PrettyPrint(rules)
-	//return rules
 }
 
 func handleDeleteCommand(client Client, ids TweetIDs) {

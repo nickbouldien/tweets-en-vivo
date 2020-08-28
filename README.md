@@ -23,3 +23,11 @@ v2 endpoints
 - refactor all of the tweet/response typings
 - make the websocket server cancelable
 
+## commands
+```bash
+go build
+```
+
+```bash
+go mod tidy
+```
