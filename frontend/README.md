@@ -1,4 +1,4 @@
-# frontend
+# tweets-en-vivo frontend
 
 ## Project setup
 ```
@@ -19,6 +19,3 @@ yarn build
 ```
 yarn test:unit
 ```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).

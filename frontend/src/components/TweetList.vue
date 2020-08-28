@@ -11,12 +11,15 @@
     </div>
 
     <!-- <button v-on:click="openConnection">Open the websocket connection</button> -->
+
     <ul class="tweets">
       <li v-for="tweet in tweets" :key="tweet.id" class="tweet">
-        <a :href="'https://twitter.com/' + tweet.authorUsername " class="username" target="_blank">
-          @{{ tweet.authorUsername }}
+        <a :href="'https://twitter.com/' + tweet.authorUsername" target="_blank">
+          <span class="username">@{{ tweet.authorUsername }}</span>
+          <span class=""> · </span>
+          <span class="name">{{ tweet.authorName }}</span>
         </a>
-        -->
+        <br />
         <a :href="'https://twitter.com/random/status/' + tweet.id " class="tweet-text" target="_blank">
           {{ tweet.text }}
         </a>
@@ -30,7 +33,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import { Component } from 'vue-property-decorator';
+import { Component, Watch } from 'vue-property-decorator';
 
 import { websocketUrl } from '../config';
 import { Tweet, TweetResponse } from '../store/main/state';
@@ -48,7 +51,6 @@ export default class TweetList extends Vue {
   }
 
   created() {
-    console.log("called created ")
     this.createWebSocketConnection();
   }
 
@@ -77,11 +79,10 @@ export default class TweetList extends Vue {
         }
         console.log("tweet: ", tweet);
 
-        // this.updateMessages(msg.data);
         this.tweets.push(tweet);
       } catch(err) {
         this.error = err;
-      }      
+      }
     }
 
     this.socket.onerror = (error: Event) => {
@@ -90,21 +91,37 @@ export default class TweetList extends Vue {
     }
 
     this.socket.onclose = (event: CloseEvent) => {
-      console.warn("socket closed");
+      console.warn("--> socket closed");
       this.socket = null;
+      console.warn("--> this.socket: ", this.socket);
     }
   }
 
   get connectionOpen(): string {
     console.log("connectionOpen ", this.socket);
-    return this.socket ? "open" : "closed";
+    return this.socket === null ? "open" : "closed";
   }
 }
 </script>
 
 <style lang="scss">
+a {
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.name {
+  color: #2c3e50;
+  font-size: 12px;
+}
+
 .tweet {
-  padding: 8px 0;
+  background-color: #f6f8fa;
+  padding: 8px 4px;
+  margin: 4px 0;
 }
 
 #tweet-list {
@@ -112,12 +129,7 @@ export default class TweetList extends Vue {
 }
 
 .tweet-text {
-  text-decoration: none;
   color: #2c3e50;
-
-  &:hover {
-    text-decoration: underline;
-  }
 }
 
 .username {
