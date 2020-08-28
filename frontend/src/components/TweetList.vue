@@ -12,9 +12,17 @@
 
     <!-- <button v-on:click="openConnection">Open the websocket connection</button> -->
     <ul class="tweets">
-      <li v-for="tweet in tweets" :key="tweet.id">
-        <!-- {{ tweet.text }} -->
-        tweet received
+      <li v-for="tweet in tweets" :key="tweet.id" class="tweet">
+        <a :href="'https://twitter.com/' + tweet.authorUsername " class="username" target="_blank">
+          @{{ tweet.authorUsername }}
+        </a>
+        -->
+        <a :href="'https://twitter.com/random/status/' + tweet.id " class="tweet-text" target="_blank">
+          {{ tweet.text }}
+        </a>
+
+        <!-- {{ tweet.created_at }} -->
+        <!-- {{ tweet.author_id }} -->
       </li>
     </ul>
   </div>
@@ -24,7 +32,8 @@
 import Vue from 'vue';
 import { Component } from 'vue-property-decorator';
 
-import { Tweet } from '../store/main/state';
+import { websocketUrl } from '../config';
+import { Tweet, TweetResponse } from '../store/main/state';
 
 @Component
 export default class TweetList extends Vue {
@@ -45,10 +54,6 @@ export default class TweetList extends Vue {
 
   createWebSocketConnection(): void {
     console.log("Starting connection to WebSocket Server");
-    // TODO - get from env variables
-    const port = 5000;
-    const path = "/ws";
-    const websocketUrl = `ws://localhost:${port}${path}`;
     this.socket = new WebSocket(websocketUrl);
 
     // register websocket event listeners/handlers
@@ -57,11 +62,21 @@ export default class TweetList extends Vue {
     }
 
     this.socket.onmessage = (event: MessageEvent) => {
+      let tweetResponse: TweetResponse;
       let tweet: Tweet;
       try {
         console.log("event.data: ", event.data);
-        tweet = JSON.parse(event.data);
+        tweetResponse = JSON.parse(event.data)
+        
+        console.log("tweetResponse: ", tweetResponse);
+        tweet = tweetResponse.data;
+        let author = tweetResponse.includes.users && tweetResponse.includes.users[0];
+        if (author) {
+          tweet.authorUsername = author.username;
+          tweet.authorName = author.name;
+        }
         console.log("tweet: ", tweet);
+
         // this.updateMessages(msg.data);
         this.tweets.push(tweet);
       } catch(err) {
@@ -87,13 +102,30 @@ export default class TweetList extends Vue {
 }
 </script>
 
-<style scoped>
+<style lang="scss">
+.tweet {
+  padding: 8px 0;
+}
+
 #tweet-list {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
+  text-align: left;
+}
+
+.tweet-text {
+  text-decoration: none;
   color: #2c3e50;
-  margin-top: 60px;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.username {
+  color: #42b983;
+  font-weight: bold;
+}
+
+ul {
+  list-style: none;
 }
 </style>
