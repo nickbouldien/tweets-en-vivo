@@ -4,3 +4,7 @@
 tweets-en-vivo
 
 .env
+
+node_modules/
+
+dist/

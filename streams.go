@@ -12,9 +12,11 @@ import (
 )
 
 const (
-	baseURL   = "https://api.twitter.com/2"
-	rulesURL  = streamURL + "/rules"
-	streamURL = baseURL + "/tweets/search/stream"
+	baseURL   = "https://api.twitter.com/2/tweets/search/stream"
+	rulesURL  = baseURL + "/rules"
+	// TODO - make the "expanded fields" in the streamURL optional/expandable
+	streamURL = baseURL + "?tweet.fields=created_at&expansions=author_id"
+
 )
 
 // FIXME - refactor all of the structs to make clearer and remove duplication
@@ -65,25 +67,25 @@ type Tweet struct {
 	Value string `json:"value"`
 }
 
-type Rule struct {
-	ID    string `json:"id"`
-	Value string `json:"value"`
-}
+//type Rule struct {
+//	ID    string `json:"id"`
+//	Value string `json:"value"`
+//}
 
 //type MatchingRule struct {
 //	ID  string `json:"id"`
 //	Tag string `json:"tag"`
 //}
 
-type StreamTweet struct {
-	ID   string `json:"id"`
-	Text string `json:"text"`
-}
+//type StreamTweet struct {
+//	ID   string `json:"id"`
+//	Text string `json:"text"`
+//}
 
-type StreamData struct {
-	Data          StreamTweet `json:"data"`
-	MatchingRules []Rule      `json:"matching_rules"`
-}
+//type StreamData struct {
+//	Data          StreamTweet `json:"data"`
+//	MatchingRules []Rule      `json:"matching_rules"`
+//}
 
 // FetchStream gets the main stream of tweets that match the current rules
 func (client Client) FetchStream(ch chan<- []byte) {
@@ -131,6 +133,10 @@ func (client Client) FetchCurrentRules() (*FetchRulesResponse, error) {
 	var fetchRulesResponse FetchRulesResponse
 	err = json.Unmarshal(body, &fetchRulesResponse)
 	if err != nil {
+		log.Printf("error decoding the response: %v", err)
+		if e, ok := err.(*json.SyntaxError); ok {
+			log.Printf("syntax error at byte offset %d", e.Offset)
+		}
 		log.Fatal(err)
 	}
 
@@ -160,6 +166,10 @@ func (client Client) AddRules(jsonBody []byte, dryRun bool) (*AddRulesResponse, 
 	var addRulesResponse AddRulesResponse
 	err = json.Unmarshal(body, &addRulesResponse)
 	if err != nil {
+		log.Printf("error decoding the response: %v", err)
+		if e, ok := err.(*json.SyntaxError); ok {
+			log.Printf("syntax error at byte offset %d", e.Offset)
+		}
 		log.Fatal(err)
 	}
 
@@ -198,6 +208,10 @@ func (client Client) DeleteStreamRules(ruleIDs TweetIDs) (*DeleteRulesResponse, 
 	var deleteRulesResponse DeleteRulesResponse
 	err = json.Unmarshal(body, &deleteRulesResponse)
 	if err != nil {
+		log.Printf("error decoding the response: %v", err)
+		if e, ok := err.(*json.SyntaxError); ok {
+			log.Printf("syntax error at byte offset %d", e.Offset)
+		}
 		log.Fatal(err)
 	}
 

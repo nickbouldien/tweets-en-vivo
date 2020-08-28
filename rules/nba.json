@@ -1,5 +1,5 @@
 {
   "add": [
-    {"value": "nba"}
+    {"value": "#nba", "tag": "#nba"}
   ]
 }

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 )
 
 func Read(reader bufio.Reader) ([]byte, error) {
@@ -35,4 +36,13 @@ func PrettyPrint(data interface{}) {
 	}
 
 	fmt.Println(string(s))
+}
+
+func PrettyPrintByteSlice(data []byte) {
+	var rules bytes.Buffer
+	if err := json.Indent(&rules, data, "", "\t"); err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("%s\n", string(rules.Bytes()))
 }
