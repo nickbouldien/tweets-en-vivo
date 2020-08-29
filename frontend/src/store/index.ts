@@ -2,17 +2,17 @@ import Vue from 'vue';
 import Vuex, { StoreOptions } from 'vuex';
 
 import { mainModule } from './main';
-import { State } from './state';
+import { IState } from './state';
 
 Vue.use(Vuex);
 
-const storeOptions: StoreOptions<State> = {
+const storeOptions: StoreOptions<IState> = {
   modules: {
     main: mainModule,
   },
 };
 
-export const store = new Vuex.Store<State>(storeOptions);
+export const store = new Vuex.Store<IState>(storeOptions);
 
 console.log("store: ", store);
 
