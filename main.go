@@ -90,10 +90,9 @@ func main() {
 	case "stream":
 		// subscribe to the feed
 		fmt.Println("createWebsocket: ", *createWebsocket)
+		wg.Add(1)
 
 		if *createWebsocket {
-			wg.Add(1)
-
 			// only start the websocket connection if the -websocket arg is present
 			http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 				fmt.Println("starting up websocket")
@@ -115,7 +114,8 @@ func main() {
 				client.Ws = ws
 				client.WsChannel = make(chan []byte)
 
-				handleStreamCommand(client, &wg)
+				// TODO - fix this
+				handleStreamCommand(client)
 			})
 
 			go func() {
@@ -124,7 +124,7 @@ func main() {
 				log.Fatal(http.ListenAndServe(websocketAddr, nil))
 			}()
 		} else {
-			handleStreamCommand(client, &wg)
+			handleStreamCommand(client)
 		}
 	default:
 		handleHelpCommand()
@@ -151,12 +151,8 @@ func websocketWriter(ws *websocket.Conn, ch <-chan []byte) {
 	}
 }
 
-func handleStreamCommand(client *Client, wg *sync.WaitGroup) {
+func handleStreamCommand(client *Client) {
 	ch := make(chan []byte)
-
-	wg.Add(1)
-
-	fmt.Println("handleStreamCommand: ", client)
 
 	if client.Ws != nil && client.WsChannel != nil {
 		fmt.Println("there is a websocket connection to send the data to the browser")
