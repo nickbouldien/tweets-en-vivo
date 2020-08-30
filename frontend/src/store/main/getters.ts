@@ -1,14 +1,14 @@
 import { getStoreAccessors } from 'typesafe-vuex';
 
-import { MainState } from './state';
-import { State } from '../state';
+import { IMainState } from './state';
+import { IState } from '../state';
 
 export const getters = {
-  error: (state: MainState) => state.error,
-  tweets: (state: MainState) => state.tweets,
+  error: (state: IMainState) => state.error,
+  tweets: (state: IMainState) => state.tweets,
 };
 
-const { read } = getStoreAccessors<MainState, State>('');
+const { read } = getStoreAccessors<IMainState, IState>('');
 
 export const readError = read(getters.error);
 export const readTweets = read(getters.tweets);

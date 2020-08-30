@@ -12,11 +12,10 @@ import (
 )
 
 const (
-	baseURL   = "https://api.twitter.com/2/tweets/search/stream"
-	rulesURL  = baseURL + "/rules"
+	baseURL  = "https://api.twitter.com/2/tweets/search/stream"
+	rulesURL = baseURL + "/rules"
 	// TODO - make the "expanded fields" in the streamURL optional/expandable
 	streamURL = baseURL + "?tweet.fields=created_at&expansions=author_id"
-
 )
 
 // FIXME - refactor all of the structs to make clearer and remove duplication
@@ -36,11 +35,6 @@ type AddRulesMeta struct {
 	Summary AddRulesSummary `json:"summary"`
 }
 
-type FetchRulesResponse struct {
-	Data []Tweet           `json:"data"`
-	Meta map[string]string `json:"meta"`
-}
-
 type DeleteRulesResponse struct {
 	Meta DeleteRulesMeta `json:"meta"`
 }
@@ -57,6 +51,11 @@ type DeleteRulesSummary struct {
 
 type DeleteRules struct {
 	Delete map[string]TweetIDs `json:"delete"`
+}
+
+type FetchRulesResponse struct {
+	Data []Tweet           `json:"data"`
+	Meta map[string]string `json:"meta"`
 }
 
 type TweetIDs []string
@@ -87,19 +86,29 @@ type Tweet struct {
 //	MatchingRules []Rule      `json:"matching_rules"`
 //}
 
+type StreamResponseBodyReader struct {
+	reader *bufio.Reader
+	buf    bytes.Buffer
+}
+
 // FetchStream gets the main stream of tweets that match the current rules
-func (client Client) FetchStream(ch chan<- []byte) {
-	req, _ := http.NewRequest(http.MethodGet, streamURL, nil)
+func (client *Client) FetchStream(ch chan<- []byte) {
+	req, err := http.NewRequest(http.MethodGet, streamURL, nil)
+	if err != nil {
+		_ = fmt.Errorf("error creating the FetchStream request: %v", err)
+	}
 	req.Header.Add("Authorization", client.ApiToken)
 
-	resp, _ := client.httpClient.Do(req)
-
+	resp, err := client.httpClient.Do(req)
+	if err != nil {
+		_ = fmt.Errorf("error with the FetchStream request: %v", err)
+	}
 	defer resp.Body.Close()
 
-	reader := bufio.NewReader(resp.Body)
+	r := StreamResponseBodyReader{reader: bufio.NewReader(resp.Body)}
 
 	for {
-		data, err := Read(*reader)
+		data, err := r.Read()
 
 		if err != nil {
 			_ = fmt.Errorf("error reading the twitter stream: %v", err)
@@ -108,6 +117,7 @@ func (client Client) FetchStream(ch chan<- []byte) {
 
 		if len(data) == 0 {
 			fmt.Println("the data is empty")
+			continue
 		}
 
 		// send the data over the channel
@@ -116,7 +126,7 @@ func (client Client) FetchStream(ch chan<- []byte) {
 }
 
 // CheckCurrentRules fetches the current rules that are persisted
-func (client Client) FetchCurrentRules() (*FetchRulesResponse, error) {
+func (client *Client) FetchCurrentRules() (*FetchRulesResponse, error) {
 	req, err := http.NewRequest(http.MethodGet, rulesURL, nil)
 	req.Header.Add("Authorization", client.ApiToken)
 
@@ -127,6 +137,7 @@ func (client Client) FetchCurrentRules() (*FetchRulesResponse, error) {
 	}
 
 	defer resp.Body.Close()
+	fmt.Println("response status code: ", resp.StatusCode)
 
 	body, err := ioutil.ReadAll(resp.Body)
 
@@ -144,7 +155,7 @@ func (client Client) FetchCurrentRules() (*FetchRulesResponse, error) {
 }
 
 // AddRules adds new rules for the stream. `dryRun` is used to verify the rules, but not persist them
-func (client Client) AddRules(jsonBody []byte, dryRun bool) (*AddRulesResponse, error) {
+func (client *Client) AddRules(jsonBody []byte, dryRun bool) (*AddRulesResponse, error) {
 	url := rulesURL
 	if dryRun {
 		url = url + "?dry_run=true"
@@ -177,7 +188,7 @@ func (client Client) AddRules(jsonBody []byte, dryRun bool) (*AddRulesResponse, 
 }
 
 // DeleteStreamRules deletes persisted rules by rule id
-func (client Client) DeleteStreamRules(ruleIDs TweetIDs) (*DeleteRulesResponse, error) {
+func (client *Client) DeleteStreamRules(ruleIDs TweetIDs) (*DeleteRulesResponse, error) {
 	fmt.Println("ids to delete: ", ruleIDs)
 	if len(ruleIDs) == 0 {
 		return nil, errors.New("you must pass in stream rule ids to delete")

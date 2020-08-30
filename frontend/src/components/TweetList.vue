@@ -1,6 +1,6 @@
 <template>
   <div id="tweet-list">
-    <h2>Tweet list</h2> 
+    <h2>Tweets</h2>
     <p>
       websocket connection: {{ connectionOpen }}
     </p>
@@ -13,20 +13,11 @@
     <!-- <button v-on:click="openConnection">Open the websocket connection</button> -->
 
     <ul class="tweets">
-      <li v-for="tweet in tweets" :key="tweet.id" class="tweet">
-        <a :href="'https://twitter.com/' + tweet.authorUsername" target="_blank">
-          <span class="username">@{{ tweet.authorUsername }}</span>
-          <span class=""> · </span>
-          <span class="name">{{ tweet.authorName }}</span>
-        </a>
-        <br />
-        <a :href="'https://twitter.com/random/status/' + tweet.id " class="tweet-text" target="_blank">
-          {{ tweet.text }}
-        </a>
-
-        <!-- {{ tweet.created_at }} -->
-        <!-- {{ tweet.author_id }} -->
-      </li>
+      <Tweet
+        v-for="tweet in tweets"
+        :key="tweet.id"
+        :tweet="tweet"
+      />
     </ul>
   </div>
 </template>
@@ -35,23 +26,47 @@
 import Vue from 'vue';
 import { Component, Watch } from 'vue-property-decorator';
 
-import { websocketUrl } from '../config';
-import { Tweet, TweetResponse } from '../store/main/state';
+import Tweet from '@/components/Tweet.vue'
+import { websocketUrl } from '@/config';
+import { ITweet, ITweetResponse } from '@/store/main/state';
+import { tweetResponses } from '../data'
 
-@Component
+@Component({
+  components: {
+    Tweet,
+  }
+})
 export default class TweetList extends Vue {
   error: Error | null = null;
-  tweets: Tweet[] = [];
+  tweets: ITweet[] = [];
   socket: WebSocket | null = null;
 
   mounted() {
     this.error = null;
-    this.tweets = [];
+    this.tweets = tweetResponses.map(tweetResponse => this.mapTweetResponseToTweet(tweetResponse))
     this.socket = null;
   }
 
   created() {
     this.createWebSocketConnection();
+  }
+
+  mapTweetResponseToTweet(tweetResponse: ITweetResponse): ITweet {
+    let author = tweetResponse.includes.users && tweetResponse.includes.users[0];
+    let tweetData = tweetResponse.data;
+
+    let tweet: ITweet = {
+      id: tweetData.id,
+      text: tweetData.text,
+      tag: tweetData.tag,
+      authorId: tweetData.id,
+      createdAt: tweetData.createdAt,
+      authorUsername: author.username,
+      authorName: author.name,
+      matchingRules: tweetResponse.matching_rules,
+    }
+
+    return tweet;
   }
 
   createWebSocketConnection(): void {
@@ -64,8 +79,8 @@ export default class TweetList extends Vue {
     }
 
     this.socket.onmessage = (event: MessageEvent) => {
-      let tweetResponse: TweetResponse;
-      let tweet: Tweet;
+      let tweetResponse: ITweetResponse;
+      let tweet: ITweet;
       try {
         console.log("event.data: ", event.data);
         tweetResponse = JSON.parse(event.data)
@@ -105,36 +120,8 @@ export default class TweetList extends Vue {
 </script>
 
 <style lang="scss">
-a {
-  text-decoration: none;
-
-  &:hover {
-    text-decoration: underline;
-  }
-}
-
-.name {
-  color: #2c3e50;
-  font-size: 12px;
-}
-
-.tweet {
-  background-color: #f6f8fa;
-  padding: 8px 4px;
-  margin: 4px 0;
-}
-
 #tweet-list {
   text-align: left;
-}
-
-.tweet-text {
-  color: #2c3e50;
-}
-
-.username {
-  color: #42b983;
-  font-weight: bold;
 }
 
 ul {

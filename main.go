@@ -1,29 +1,28 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/gorilla/websocket"
-	"github.com/joho/godotenv"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"path"
 	"sync"
-	"time"
+
+	"github.com/gorilla/websocket"
+	"github.com/joho/godotenv"
 )
 
 type Client struct {
 	ApiToken   string
 	httpClient *http.Client
-	ws         *websocket.Conn
-	wsChannel  chan []byte
+	Ws         *websocket.Conn
+	WsChannel  chan []byte
 }
 
 const (
-	ApiToken = "API_TOKEN"
+	ApiToken      = "API_TOKEN"
 	websocketAddr = ":5000"
 )
 
@@ -41,7 +40,6 @@ func main() {
 		log.Fatal(`Error loading the .env file. Make sure it exists and 
 				has all of the required environment variables`)
 	}
-	//interrupt := make(chan os.Signal, 1)
 
 	command := flag.String("command", "stream", "the command you want to perform")
 	file := flag.String("file", "rules.json", "the rules file you want to use (in the rules/ dir)")
@@ -64,11 +62,9 @@ func main() {
 				api credentials in the .env file`)
 	}
 
-	client := Client{
+	client := &Client{
 		fmt.Sprint("Bearer ", token),
-		&http.Client{
-			Timeout: 15 * time.Second,
-		},
+		&http.Client{},
 		nil,
 		nil,
 	}
@@ -94,11 +90,13 @@ func main() {
 	case "stream":
 		// subscribe to the feed
 		fmt.Println("createWebsocket: ", *createWebsocket)
+		wg.Add(1)
 
 		if *createWebsocket {
 			// only start the websocket connection if the -websocket arg is present
 			http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 				fmt.Println("starting up websocket")
+
 				ws, err := upgrader.Upgrade(w, r, nil)
 
 				if err != nil {
@@ -110,34 +108,35 @@ func main() {
 				}
 
 				// just for a sanity check
-				fmt.Println(ws.LocalAddr())
+				fmt.Println("websocket addr: ", ws.LocalAddr())
 
-				// update the client with the websocket and websocket channel
-				client.ws = ws
-				client.wsChannel = make(chan []byte)
+				// update the client struct with the websocket and websocket channel
+				client.Ws = ws
+				client.WsChannel = make(chan []byte)
 
-				handleStreamCommand(client, &wg)
+				// TODO - fix this
+				handleStreamCommand(client)
 			})
 
 			go func() {
 				fmt.Println("http listen and serve")
-				wg.Add(1)
 
 				log.Fatal(http.ListenAndServe(websocketAddr, nil))
 			}()
 		} else {
-			handleStreamCommand(client, &wg)
+			handleStreamCommand(client)
 		}
 	default:
-		fmt.Println(`--> the available commands are: 
-				"add", "check", "delete", "delete-all", and "stream"`)
+		handleHelpCommand()
 		os.Exit(1)
 	}
 	wg.Wait()
 }
 
 func websocketWriter(ws *websocket.Conn, ch <-chan []byte) {
+	fmt.Println("websocket writer")
 	defer func() {
+		fmt.Println("closing the websocket connection")
 		_ = ws.Close()
 	}()
 
@@ -145,21 +144,19 @@ func websocketWriter(ws *websocket.Conn, ch <-chan []byte) {
 		select {
 		case data := <-ch:
 			if err := ws.WriteMessage(websocket.TextMessage, data); err != nil {
-				_ = fmt.Errorf("error writing the message: %v", err)
+				_ = fmt.Errorf("error writing the message to the websocket: %v", err)
 				return
 			}
 		}
 	}
 }
 
-func handleStreamCommand(client Client, wg *sync.WaitGroup) {
-	ch := make(chan []byte, 100)
+func handleStreamCommand(client *Client) {
+	ch := make(chan []byte)
 
-	wg.Add(1)
-
-	if client.ws != nil && client.wsChannel != nil {
+	if client.Ws != nil && client.WsChannel != nil {
 		fmt.Println("there is a websocket connection to send the data to the browser")
-		go websocketWriter(client.ws, client.wsChannel)
+		go websocketWriter(client.Ws, client.WsChannel)
 	}
 
 	go client.FetchStream(ch)
@@ -167,61 +164,63 @@ func handleStreamCommand(client Client, wg *sync.WaitGroup) {
 	for {
 		select {
 		case data := <-ch:
-			//return &tweets, nil
 			handleTweetData(client, data)
 			//case <-"done":
 			// TODO - implement
 			//	fmt.Println("ending the stream")
 			//	close(ch)
+			//default:
+			//	fmt.Println("default")
 		}
 	}
 }
 
-func handleTweetData(client Client, data []byte) {
-	if client.ws != nil && client.wsChannel != nil {
+func handleTweetData(client *Client, data []byte) {
+	fmt.Println("handleTweetData")
+	if client.Ws != nil && client.WsChannel != nil {
 		// if there is an open websocket connection, send the data to it
-		client.wsChannel <- data
+		client.WsChannel <- data
 	}
 
-	var tweet Tweet
-	err := json.Unmarshal(data, &tweet)
-	if err != nil {
-		log.Fatal(err)
-	}
+	//var tweet Tweet
+	//err := json.Unmarshal(data, &tweet)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
 
 	PrettyPrintByteSlice(data)
 }
 
-func handleAddRulesCommand(client Client, file string, dryRun bool) {
+func handleAddRulesCommand(client *Client, filename string, dryRun bool) {
 	// import the rules json file
-	jsonFile, err := os.Open(path.Join("rules/", file))
+	file, err := os.Open(path.Join("rules/", filename))
 	if err != nil {
 		log.Fatal("could not open the json file", err)
 	}
-	defer jsonFile.Close()
+	defer CloseFile(file)
 
-	byteValue, err := ioutil.ReadAll(jsonFile)
+	b, err := ioutil.ReadAll(file)
 	if err != nil {
 		log.Fatal("could not read the json", err)
 	}
 
 	// add the rules
-	rules, err := client.AddRules(byteValue, dryRun)
+	rules, err := client.AddRules(b, dryRun)
 	if err != nil {
 		log.Fatal("error reading the response", err)
 	}
 	PrettyPrint(rules)
 }
 
-func handleCheckRulesCommand(client Client) {
-	rules, e := client.FetchCurrentRules()
-	if e != nil {
-		log.Fatal(e)
+func handleCheckRulesCommand(client *Client) {
+	rules, err := client.FetchCurrentRules()
+	if err != nil {
+		log.Fatal(err)
 	}
 	PrettyPrint(rules)
 }
 
-func handleDeleteCommand(client Client, ids TweetIDs) {
+func handleDeleteCommand(client *Client, ids TweetIDs) {
 	if len(ids) == 0 {
 		log.Fatal("you must supply a list of rule ids to delete")
 	}
@@ -233,7 +232,7 @@ func handleDeleteCommand(client Client, ids TweetIDs) {
 	PrettyPrint(rules)
 }
 
-func handleDeleteAllCommand(client Client) {
+func handleDeleteAllCommand(client *Client) {
 	// first: get all the current rule ids
 	currentRules, e := client.FetchCurrentRules()
 	if e != nil {
@@ -259,6 +258,6 @@ func handleDeleteAllCommand(client Client) {
 }
 
 func handleHelpCommand() {
-	// TODO - implement (show all of the commands / args)
-	fmt.Println("help")
+	fmt.Println(`--> the available commands are: 
+				"add", "check", "delete", "delete-all", and "stream"`)
 }

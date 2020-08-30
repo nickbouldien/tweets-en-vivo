@@ -1,37 +1,38 @@
-export interface Tweet {
-  id: string;
-  text: string;
-  tag?: string;
+export interface ITweet {
   authorId?: string;
   authorName?: string;
   authorUsername?: string;
+  createdAt?: string;
+  id: string;
+  matchingRules?: IRule[];
+  text: string;
+  tag?: string;
 }
 
-export interface Rule {
+export interface IRule {
   id: string;
   tag?: string;
 }
 
-export interface User {
-  created_at: string;
+export interface IUser {
+  createdAt: string;
   id: string;
   name: string;
   username: string;
 }
 
-// TODO - reformat this on the server
-export interface IncludesSection {
-  users: User[];
+export interface IIncludesSection {
+  users: IUser[];
 }
 
-export interface TweetResponse {
-  data: Tweet;
-  includes: IncludesSection;
-  matching_rules: Rule[];
+export interface ITweetResponse {
+  data: ITweet;
+  includes: IIncludesSection;
+  matching_rules: IRule[];
 }
 
-export interface MainState {
+export interface IMainState {
   error: Error | null;
-  tweets: Tweet[];
+  tweets: ITweet[];
   websocket: Websocket | null;
 }
