@@ -35,11 +35,6 @@ type AddRulesMeta struct {
 	Summary AddRulesSummary `json:"summary"`
 }
 
-type FetchRulesResponse struct {
-	Data []Tweet           `json:"data"`
-	Meta map[string]string `json:"meta"`
-}
-
 type DeleteRulesResponse struct {
 	Meta DeleteRulesMeta `json:"meta"`
 }
@@ -56,6 +51,11 @@ type DeleteRulesSummary struct {
 
 type DeleteRules struct {
 	Delete map[string]TweetIDs `json:"delete"`
+}
+
+type FetchRulesResponse struct {
+	Data []Tweet           `json:"data"`
+	Meta map[string]string `json:"meta"`
 }
 
 type TweetIDs []string
@@ -105,12 +105,9 @@ func (client *Client) FetchStream(ch chan<- []byte) {
 	}
 	defer resp.Body.Close()
 
-	//reader := bufio.NewReader(resp.Body)
-
 	r := StreamResponseBodyReader{reader: bufio.NewReader(resp.Body)}
 
 	for {
-		//data, err := Read(*reader)
 		data, err := r.Read()
 
 		if err != nil {

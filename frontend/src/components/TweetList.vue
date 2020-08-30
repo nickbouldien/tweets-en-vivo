@@ -48,7 +48,7 @@ export default class TweetList extends Vue {
   }
 
   created() {
-    // this.createWebSocketConnection();
+    this.createWebSocketConnection();
   }
 
   mapTweetResponseToTweet(tweetResponse: ITweetResponse): ITweet {
