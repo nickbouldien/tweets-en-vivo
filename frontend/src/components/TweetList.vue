@@ -4,7 +4,7 @@
 
     <ConnectionInfo
       :error=error
-      :websocketOpen=false
+      :websocketOpen=Boolean(socket)
       @toggleWebsocket="toggleConnection"
     />
 
@@ -36,17 +36,14 @@ import { tweetResponses } from '@/data'
 })
 export default class TweetList extends Vue {
   error: Error | null = null;
-  tweets: ITweet[] = [];
   socket: WebSocket | null = null;
+  tweets: ITweet[] = [];
 
   mounted() {
-    this.error = null;
-    this.tweets = tweetResponses.map(tweetResponse => this.mapTweetResponseToTweet(tweetResponse))
-    this.socket = null;
+    this.tweets = tweetResponses.map(tweetResponse => this.mapTweetResponseToTweet(tweetResponse));
   }
 
   toggleConnection() {
-    console.log("openConnection called");
     if (this.socket) {
       // close the socket if it already exists
       console.log("this.socket exists ", this.socket);
@@ -85,20 +82,11 @@ export default class TweetList extends Vue {
 
     this.socket.onmessage = (event: MessageEvent) => {
       let tweetResponse: ITweetResponse;
-      let tweet: ITweet;
-      try {
-        console.log("event.data: ", event.data);
-        tweetResponse = JSON.parse(event.data)
-        
-        console.log("tweetResponse: ", tweetResponse);
-        tweet = tweetResponse.data;
-        let author = tweetResponse.includes.users && tweetResponse.includes.users[0];
-        if (author) {
-          tweet.authorUsername = author.username;
-          tweet.authorName = author.name;
-        }
-        console.log("tweet: ", tweet);
 
+      try {
+        tweetResponse = JSON.parse(event.data)
+        let tweet: ITweet = this.mapTweetResponseToTweet(tweetResponse);
+        console.log("==> tweet: ", tweet);
         this.tweets.push(tweet);
       } catch(err) {
         this.error = err;
@@ -116,11 +104,6 @@ export default class TweetList extends Vue {
       console.warn("--> this.socket: ", this.socket);
     }
   }
-
-  // get connectionOpen(): string {
-  //   console.log("connectionOpen ", this.socket);
-  //   return this.socket === null ? "closed" : "open";
-  // }
 }
 </script>
 

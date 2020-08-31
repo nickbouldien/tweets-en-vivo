@@ -119,7 +119,6 @@ func main() {
 			})
 
 			go func() {
-				fmt.Println("http listen and serve")
 				log.Fatal(http.ListenAndServe(websocketAddr, nil))
 			}()
 		} else {
@@ -133,7 +132,6 @@ func main() {
 }
 
 func websocketWriter(ws *websocket.Conn, ch <-chan []byte) {
-	fmt.Println("websocket writer")
 	defer func() {
 		fmt.Println("closing the websocket connection")
 		_ = ws.Close()

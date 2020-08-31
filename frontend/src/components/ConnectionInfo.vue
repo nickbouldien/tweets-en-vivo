@@ -4,7 +4,7 @@
       websocket connection: {{ connectionOpen }}
     </p>
     <button v-on:click="toggleConnection">
-      Open the websocket connection
+      {{ connectionOpen === "closed" ? "open" : "close" }} the websocket connection
     </button>
     <div v-if="error != null">
       <pre>
@@ -34,12 +34,11 @@ export default class ConnectionInfo extends Vue {
   }
 
   get connectionOpen(): string {
-    console.log("connectionOpen ", this.websocketOpen);
-    return this.websocketOpen ? "open" : "closed";
+    return Boolean(this.websocketOpen) ? "open" : "closed";
   }
 }
 </script>
 
 <style scoped lang="scss">
-
+/* TODO - style the button */
 </style>
