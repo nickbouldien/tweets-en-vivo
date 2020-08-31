@@ -10,6 +10,7 @@
       <span class="name">{{ tweet.authorName }}</span>
     </a>
     <br />
+    <!-- TODO - display the time the tweet was created -->
     <a
       :href="'https://twitter.com/' + tweet.authorUsername + '/status/' + tweet.id"
       class="tweet-text"
@@ -25,7 +26,7 @@
 import Vue from 'vue';
 import { Component, Prop } from 'vue-property-decorator';
 
-import { ITweet } from '@/store/main/state';
+import { ITweet } from '@/types';
 
 @Component({
   name: 'Tweet',

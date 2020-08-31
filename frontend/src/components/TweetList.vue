@@ -27,7 +27,7 @@ import { Component, Watch } from 'vue-property-decorator';
 import ConnectionInfo from '@/components/ConnectionInfo.vue'
 import Tweet from '@/components/Tweet.vue'
 import { websocketUrl } from '@/config';
-import { ITweet, ITweetResponse } from '@/store/main/state';
+import { ITweet, ITweetResponse } from '@/types';
 import { tweetResponses } from '@/data';
 
 @Component({
@@ -49,7 +49,7 @@ export default class TweetList extends Vue {
   toggleConnection() {
     if (this.socket) {
       // close the socket if it already exists
-      console.log("this.socket exists ", this.socket);
+      console.log("this.socket exists: ", this.socket);
       this.socket.close();
       this.socket = null;
     }

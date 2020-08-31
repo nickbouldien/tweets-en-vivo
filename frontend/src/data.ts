@@ -1,4 +1,4 @@
-import { ITweetResponse } from '@/store/main/state'
+import { ITweetResponse } from '@/types';
 
 export const tweetResponse1: ITweetResponse = {
   data: {
