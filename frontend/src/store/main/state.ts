@@ -34,5 +34,5 @@ export interface ITweetResponse {
 export interface IMainState {
   error: Error | null;
   tweets: ITweet[];
-  websocket: Websocket | null;
+  websocket: WebSocket | null;
 }

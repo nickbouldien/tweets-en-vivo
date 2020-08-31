@@ -14,7 +14,7 @@ const storeOptions: StoreOptions<IState> = {
 
 export const store = new Vuex.Store<IState>(storeOptions);
 
-console.log("store: ", store);
+// console.log("store: ", store);
 
 // const store = new Vuex.Store({
 //   state: {

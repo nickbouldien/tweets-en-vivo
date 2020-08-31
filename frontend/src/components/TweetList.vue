@@ -1,16 +1,12 @@
 <template>
   <div id="tweet-list">
     <h2>Tweets</h2>
-    <p>
-      websocket connection: {{ connectionOpen }}
-    </p>
-    <div v-if="error != null">
-      <pre>
-        {{ error.toString() }}
-      </pre>
-    </div>
 
-    <!-- <button v-on:click="openConnection">Open the websocket connection</button> -->
+    <ConnectionInfo
+      :error=error
+      :websocketOpen=false
+      @toggleWebsocket="toggleConnection"
+    />
 
     <ul class="tweets">
       <Tweet
@@ -26,13 +22,15 @@
 import Vue from 'vue';
 import { Component, Watch } from 'vue-property-decorator';
 
+import ConnectionInfo from '@/components/ConnectionInfo.vue'
 import Tweet from '@/components/Tweet.vue'
 import { websocketUrl } from '@/config';
 import { ITweet, ITweetResponse } from '@/store/main/state';
-import { tweetResponses } from '../data'
+import { tweetResponses } from '@/data'
 
 @Component({
   components: {
+    ConnectionInfo,
     Tweet,
   }
 })
@@ -47,7 +45,14 @@ export default class TweetList extends Vue {
     this.socket = null;
   }
 
-  created() {
+  toggleConnection() {
+    console.log("openConnection called");
+    if (this.socket) {
+      // close the socket if it already exists
+      console.log("this.socket exists ", this.socket);
+      this.socket.close();
+      this.socket = null;
+    }
     this.createWebSocketConnection();
   }
 
@@ -112,14 +117,14 @@ export default class TweetList extends Vue {
     }
   }
 
-  get connectionOpen(): string {
-    console.log("connectionOpen ", this.socket);
-    return this.socket === null ? "open" : "closed";
-  }
+  // get connectionOpen(): string {
+  //   console.log("connectionOpen ", this.socket);
+  //   return this.socket === null ? "closed" : "open";
+  // }
 }
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
 #tweet-list {
   text-align: left;
 }

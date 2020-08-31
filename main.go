@@ -90,9 +90,9 @@ func main() {
 	case "stream":
 		// subscribe to the feed
 		fmt.Println("createWebsocket: ", *createWebsocket)
-		wg.Add(1)
 
 		if *createWebsocket {
+			wg.Add(1)
 			// only start the websocket connection if the -websocket arg is present
 			http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 				fmt.Println("starting up websocket")
@@ -120,7 +120,6 @@ func main() {
 
 			go func() {
 				fmt.Println("http listen and serve")
-
 				log.Fatal(http.ListenAndServe(websocketAddr, nil))
 			}()
 		} else {
