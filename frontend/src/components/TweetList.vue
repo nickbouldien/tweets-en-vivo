@@ -8,6 +8,8 @@
       @toggleWebsocket="toggleConnection"
     />
 
+    <!-- TODO - have a section to display the current stream/tweet "rules" -->
+
     <ul class="tweets">
       <Tweet
         v-for="tweet in tweets"
@@ -26,7 +28,7 @@ import ConnectionInfo from '@/components/ConnectionInfo.vue'
 import Tweet from '@/components/Tweet.vue'
 import { websocketUrl } from '@/config';
 import { ITweet, ITweetResponse } from '@/store/main/state';
-import { tweetResponses } from '@/data'
+import { tweetResponses } from '@/data';
 
 @Component({
   components: {
@@ -40,6 +42,7 @@ export default class TweetList extends Vue {
   tweets: ITweet[] = [];
 
   mounted() {
+    // TODO - remove this. this is only for dev/debugging
     this.tweets = tweetResponses.map(tweetResponse => this.mapTweetResponseToTweet(tweetResponse));
   }
 
@@ -72,12 +75,13 @@ export default class TweetList extends Vue {
   }
 
   createWebSocketConnection(): void {
-    console.log("Starting connection to WebSocket Server");
+    console.log("=> starting the connection to the websocket");
     this.socket = new WebSocket(websocketUrl);
 
     // register websocket event listeners/handlers
     this.socket.onopen = (event: Event) => {
       console.log('socket opened: ', this.socket);
+      this.error = null;
     }
 
     this.socket.onmessage = (event: MessageEvent) => {
@@ -87,8 +91,11 @@ export default class TweetList extends Vue {
         tweetResponse = JSON.parse(event.data)
         let tweet: ITweet = this.mapTweetResponseToTweet(tweetResponse);
         console.log("==> tweet: ", tweet);
-        this.tweets.push(tweet);
+        // this.tweets.push(tweet);
+        // FIXME - better (more efficient) way to do this?
+        this.tweets.unshift(tweet);
       } catch(err) {
+        console.error("error parsing the websocket message");
         this.error = err;
       }
     }
@@ -100,6 +107,7 @@ export default class TweetList extends Vue {
 
     this.socket.onclose = (event: CloseEvent) => {
       console.warn("--> socket closed");
+      this.error = null;
       this.socket = null;
       console.warn("--> this.socket: ", this.socket);
     }
@@ -109,10 +117,13 @@ export default class TweetList extends Vue {
 
 <style scoped lang="scss">
 #tweet-list {
+  padding: 12px;
   text-align: left;
+  border: 1px solid black;
 }
 
 ul {
+  padding-left: 0;
   list-style: none;
 }
 </style>

@@ -1,7 +1,10 @@
 <template>
   <div class="connection-info">
     <p>
-      websocket connection: {{ connectionOpen }}
+      websocket connection: 
+      <span v-bind:class="connectionOpen">
+        {{ connectionOpen }}
+      </span>
     </p>
     <button v-on:click="toggleConnection">
       {{ connectionOpen === "closed" ? "open" : "close" }} the websocket connection
@@ -40,5 +43,11 @@ export default class ConnectionInfo extends Vue {
 </script>
 
 <style scoped lang="scss">
-/* TODO - style the button */
+.closed {
+  color: red;
+}
+
+.open {
+  color: green;
+}
 </style>

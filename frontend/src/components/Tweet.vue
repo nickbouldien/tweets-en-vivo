@@ -1,8 +1,12 @@
 <template>
   <li class="tweet">
-    <a :href="'https://twitter.com/' + tweet.authorUsername" target="_blank">
+    <a
+      :href="'https://twitter.com/' + tweet.authorUsername"
+      target="_blank"
+      rel="noopener"
+    >
       <span class="username">@{{ tweet.authorUsername }}</span>
-      <span class=""> · </span>
+      <span> · </span>
       <span class="name">{{ tweet.authorName }}</span>
     </a>
     <br />
@@ -10,6 +14,7 @@
       :href="'https://twitter.com/' + tweet.authorUsername + '/status/' + tweet.id"
       class="tweet-text"
       target="_blank"
+      rel="noopener"
     >
       {{ tweet.text }}
     </a>
@@ -49,7 +54,7 @@ a {
 
 .tweet {
   background-color: #f6f8fa;
-  padding: 8px 4px;
+  padding: 8px;
   margin: 6px 0;
 }
 

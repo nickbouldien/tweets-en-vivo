@@ -95,8 +95,6 @@ func main() {
 			wg.Add(1)
 			// only start the websocket connection if the -websocket arg is present
 			http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-				fmt.Println("starting up websocket")
-
 				ws, err := upgrader.Upgrade(w, r, nil)
 
 				if err != nil {
@@ -152,7 +150,7 @@ func handleStreamCommand(client *Client) {
 	ch := make(chan []byte)
 
 	if client.Ws != nil && client.WsChannel != nil {
-		fmt.Println("there is a websocket connection to send the data to the browser")
+		fmt.Println("there is a websocket connection open")
 		go websocketWriter(client.Ws, client.WsChannel)
 	}
 
@@ -173,7 +171,6 @@ func handleStreamCommand(client *Client) {
 }
 
 func handleTweetData(client *Client, data []byte) {
-	fmt.Println("handleTweetData")
 	if client.Ws != nil && client.WsChannel != nil {
 		// if there is an open websocket connection, send the data to it
 		client.WsChannel <- data
