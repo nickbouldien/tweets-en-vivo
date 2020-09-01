@@ -10,8 +10,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-
-	"github.com/gorilla/websocket"
 )
 
 const (
@@ -96,16 +94,6 @@ type TwitterClient struct {
 }
 
 type Stream struct {
-}
-
-// handles the websocket connection
-type WebsocketStream struct {
-	Ws        *websocket.Conn
-	WsChannel chan []byte
-}
-
-func (w *WebsocketStream) Close() {
-	w.Ws.Close()
 }
 
 type StreamResponseBodyReader struct {
@@ -291,38 +279,17 @@ func (client *Client) DeleteStreamRules(ruleIDs TweetIDs) (*DeleteRulesResponse,
 	return &deleteRulesResponse, nil
 }
 
-func handleTweetData(client *Client, data []byte) {
-	if client.Ws != nil && client.WsChannel != nil {
-		// if there is an open websocket connection, send the data to it
-		client.WsChannel <- data
-	}
-
+func handleTweetData(wsStream *WebsocketStream, data []byte) {
 	//var tweet Tweet
 	//err := json.Unmarshal(data, &tweet)
 	//if err != nil {
 	//	log.Fatal(err)
 	//}
 
-	PrettyPrintByteSlice(data)
-}
-
-func websocketWriter(ws *websocket.Conn, ch <-chan []byte) {
-	defer func() {
-		fmt.Println("closing the websocket connection")
-		err := ws.Close()
-		if err != nil {
-			_ = fmt.Errorf("error closing the websocket: %v", err)
-			return
-		}
-	}()
-
-	for {
-		select {
-		case data := <-ch:
-			if err := ws.WriteMessage(websocket.TextMessage, data); err != nil {
-				_ = fmt.Errorf("error writing the message to the websocket: %v", err)
-				return
-			}
-		}
+	if wsStream != nil {
+		// if there is an open websocket connection, send the data to it
+		wsStream.WsChannel <- data
 	}
+
+	PrettyPrintByteSlice(data)
 }

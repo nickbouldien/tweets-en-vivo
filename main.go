@@ -15,8 +15,6 @@ import (
 type Client struct {
 	ApiToken   string
 	httpClient *http.Client
-	Ws         *websocket.Conn
-	WsChannel  chan []byte
 }
 
 const (

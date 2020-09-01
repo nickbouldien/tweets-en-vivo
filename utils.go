@@ -8,6 +8,15 @@ import (
 	"os"
 )
 
+// CloseFile is a helper function to close a file. It will os.Exit(1) if there is an error closing the file
+func CloseFile(file *os.File) {
+	err := file.Close()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
+	}
+}
+
 // PrettyPrint is a helper function to print the data to the terminal with some formatting
 func PrettyPrint(data interface{}) {
 	s, err := json.MarshalIndent(data, "", "\t")
@@ -26,13 +35,4 @@ func PrettyPrintByteSlice(data []byte) {
 	}
 
 	fmt.Printf("%s\n", string(buf.Bytes()))
-}
-
-// CloseFile is a helper function to close a file. It will os.Exit(1) if there is an error closing the file
-func CloseFile(file *os.File) {
-	err := file.Close()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		os.Exit(1)
-	}
 }

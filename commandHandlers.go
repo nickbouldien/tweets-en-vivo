@@ -16,8 +16,6 @@ func handleCLICommand(options Options, wg *sync.WaitGroup) {
 	client := &Client{
 		fmt.Sprint("Bearer ", ApiToken),
 		&http.Client{},
-		nil,
-		nil,
 	}
 
 	switch options.command {
@@ -57,19 +55,20 @@ func handleCLICommand(options Options, wg *sync.WaitGroup) {
 				// just for a sanity check
 				fmt.Println("websocket addr: ", ws.LocalAddr())
 
-				// update the client struct with the websocket and websocket channel
-				client.Ws = ws
-				client.WsChannel = make(chan []byte)
+				websocketStream := &WebsocketStream{
+					Ws:        ws,
+					WsChannel: make(chan []byte),
+				}
 
 				// TODO - fix this
-				handleStreamCommand(client)
+				handleStreamCommand(client, websocketStream)
 			})
 
 			go func() {
 				log.Fatal(http.ListenAndServe(websocketAddr, nil))
 			}()
 		} else {
-			handleStreamCommand(client)
+			handleStreamCommand(client, nil)
 		}
 	default:
 		handleHelpCommand()
@@ -149,20 +148,19 @@ func handleHelpCommand() {
 				"add", "check", "delete", "delete-all", and "stream"`)
 }
 
-func handleStreamCommand(client *Client) {
-	ch := make(chan []byte)
-
-	if client.Ws != nil && client.WsChannel != nil {
+func handleStreamCommand(client *Client, wsStream *WebsocketStream) {
+	if wsStream != nil {
 		fmt.Println("there is a websocket connection open")
-		go websocketWriter(client.Ws, client.WsChannel)
+		go wsStream.Handler(wsStream.WsChannel)
 	}
 
+	ch := make(chan []byte)
 	go client.FetchStream(ch)
 
 	for {
 		select {
 		case data := <-ch:
-			handleTweetData(client, data)
+			handleTweetData(wsStream, data)
 			//case <-"done":
 			// TODO - implement
 			//	fmt.Println("ending the stream")
