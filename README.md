@@ -6,7 +6,7 @@ stream tweets to your terminal based on rules (using the Twitter v2 API)
 you can place "private rules" (not tracked by git) in the `/rules/private/` directory.
 
 ## quick demo
-![tweets-en-vivo demo](https://github.com/nickbouldien/tweets-en-vivo/demo.gif)
+![tweets-en-vivo demo](demo.gif)
 
 
 ## commands
