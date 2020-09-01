@@ -1,5 +1,5 @@
 <template>
-  <div id="tweet-list">
+  <section id="tweet-list">
     <h2>Tweets</h2>
 
     <ConnectionInfo
@@ -17,7 +17,7 @@
         :tweet="tweet"
       />
     </ul>
-  </div>
+  </section>
 </template>
 
 <script lang="ts">
@@ -91,7 +91,6 @@ export default class TweetList extends Vue {
         tweetResponse = JSON.parse(event.data)
         let tweet: ITweet = this.mapTweetResponseToTweet(tweetResponse);
         console.log("==> tweet: ", tweet);
-        // this.tweets.push(tweet);
         // FIXME - better (more efficient) way to do this?
         this.tweets.unshift(tweet);
       } catch(err) {
@@ -117,13 +116,15 @@ export default class TweetList extends Vue {
 
 <style scoped lang="scss">
 #tweet-list {
+  border-radius: 10px;
   padding: 12px;
   text-align: left;
-  border: 1px solid black;
 }
 
 ul {
-  padding-left: 0;
+  height: 50vh;
   list-style: none;
+  overflow-y: scroll;
+  padding-left: 0;
 }
 </style>

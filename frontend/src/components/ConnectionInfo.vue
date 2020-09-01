@@ -1,5 +1,5 @@
 <template>
-  <div class="connection-info">
+  <section class="connection-info">
     <p>
       websocket connection: 
       <span v-bind:class="connectionOpen">
@@ -7,14 +7,14 @@
       </span>
     </p>
     <button v-on:click="toggleConnection">
-      {{ connectionOpen === "closed" ? "open" : "close" }} the websocket connection
+      {{ connectionOpen === "closed" ? "open" : "close" }} the websocket
     </button>
     <div v-if="error != null">
       <pre>
         {{ error.toString() }}
       </pre>
     </div>
-  </div>
+  </section>
 </template>
 
 <script lang="ts">

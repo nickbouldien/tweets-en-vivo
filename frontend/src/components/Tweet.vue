@@ -55,8 +55,9 @@ a {
 
 .tweet {
   background-color: #f6f8fa;
-  padding: 8px;
+  border-radius: 10px;
   margin: 6px 0;
+  padding: 8px;
 }
 
 .tweet-text {
