@@ -8,21 +8,21 @@ import (
 
 // WebsocketStream handles the websocket connection
 type WebsocketStream struct {
-	Ws        *websocket.Conn
+	WsConn    *websocket.Conn
 	WsChannel chan []byte
 }
 
 // newWebsocketStream creates a new WebsocketStream
 func newWebsocketStream(wsConn *websocket.Conn, wsChan chan []byte) *WebsocketStream {
 	return &WebsocketStream{
-		Ws:        wsConn,
+		WsConn:    wsConn,
 		WsChannel: wsChan,
 	}
 }
 
 // Close closes the websocket connection
 func (w *WebsocketStream) Close() error {
-	err := w.Ws.Close()
+	err := w.WsConn.Close()
 	//close(w.WsChannel)
 
 	if err != nil {
@@ -31,7 +31,7 @@ func (w *WebsocketStream) Close() error {
 	return nil
 }
 
-//
+// Handler handles the data received from the channel
 func (w *WebsocketStream) Handler(ch <-chan []byte) {
 	defer func() {
 		fmt.Println("closing the websocket connection")
@@ -52,7 +52,7 @@ func (w *WebsocketStream) Handler(ch <-chan []byte) {
 
 // Write writes data to the websocket connection
 func (w *WebsocketStream) Write(data []byte) {
-	if err := w.Ws.WriteMessage(websocket.TextMessage, data); err != nil {
+	if err := w.WsConn.WriteMessage(websocket.TextMessage, data); err != nil {
 		_ = fmt.Errorf("error writing the message to the websocket: %v", err)
 		return
 	}

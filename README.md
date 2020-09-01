@@ -100,6 +100,7 @@ v2 endpoints (base url = https://api.twitter.com/2/)
 - write tests!
 - customize the tweet fields retrieved (right now it is decently hard coded to fields I care about)
 - format the printing to terminal
+- need better file/code organization
 - lots of refactoring/cleanup
 - refactor all of the tweet/response typings
 - make the websocket server cancelable

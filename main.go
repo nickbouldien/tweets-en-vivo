@@ -18,12 +18,23 @@ const (
 
 var ApiToken string
 
+// TODO - get from config (env variables). hard coding for now
+var AllowedOrigins = []string{
+	"http://localhost:8080",
+}
+
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
-		// FIXME - range over a list of accepted origins
-		return true
+		origin := r.Header.Get("Origin")
+
+		for _, allowedOrigin := range AllowedOrigins {
+			if allowedOrigin == origin {
+				return true
+			}
+		}
+		return false
 	},
 }
 
