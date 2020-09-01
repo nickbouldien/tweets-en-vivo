@@ -12,11 +12,22 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func handleCLICommand(options Options, wg *sync.WaitGroup) {
-	client := &Client{
-		fmt.Sprint("Bearer ", ApiToken),
-		&http.Client{},
+type Client struct {
+	ApiToken   string
+	httpClient *http.Client
+}
+
+// newClient creates a new Client
+func newClient(token string) *Client {
+	return &Client{
+		ApiToken:   token,
+		httpClient: &http.Client{},
 	}
+}
+
+func handleCLICommand(options Options, wg *sync.WaitGroup) {
+	token := fmt.Sprint("Bearer ", ApiToken)
+	client := newClient(token)
 
 	switch options.command {
 	case "add":
@@ -55,10 +66,7 @@ func handleCLICommand(options Options, wg *sync.WaitGroup) {
 				// just for a sanity check
 				fmt.Println("websocket addr: ", ws.LocalAddr())
 
-				websocketStream := &WebsocketStream{
-					Ws:        ws,
-					WsChannel: make(chan []byte),
-				}
+				websocketStream := newWebsocketStream(ws, make(chan []byte))
 
 				// TODO - fix this
 				handleStreamCommand(client, websocketStream)
@@ -77,7 +85,7 @@ func handleCLICommand(options Options, wg *sync.WaitGroup) {
 }
 
 func handleAddRulesCommand(client *Client, filename string, dryRun bool) {
-	// import the rules json file
+	// first: import the rules json file
 	file, err := os.Open(path.Join("rules/", filename))
 	if err != nil {
 		log.Fatal("could not open the json file", err)
@@ -89,7 +97,7 @@ func handleAddRulesCommand(client *Client, filename string, dryRun bool) {
 		log.Fatal("could not read the json", err)
 	}
 
-	// add the rules
+	// second: add the rules
 	rules, err := client.AddRules(b, dryRun)
 	if err != nil {
 		log.Fatal("error reading the response", err)

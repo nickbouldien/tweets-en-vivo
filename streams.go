@@ -87,13 +87,10 @@ type Tweet struct {
 //	MatchingRules []Rule      `json:"matching_rules"`
 //}
 
-// connects with the twitter API
+// TwitterClient connects with the twitter API
 type TwitterClient struct {
 	apiToken   string
 	httpClient *http.Client
-}
-
-type Stream struct {
 }
 
 type StreamResponseBodyReader struct {

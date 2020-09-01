@@ -12,11 +12,6 @@ import (
 	"github.com/joho/godotenv"
 )
 
-type Client struct {
-	ApiToken   string
-	httpClient *http.Client
-}
-
 const (
 	websocketAddr = ":5000"
 )

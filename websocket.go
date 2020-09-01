@@ -12,6 +12,14 @@ type WebsocketStream struct {
 	WsChannel chan []byte
 }
 
+// newWebsocketStream creates a new WebsocketStream
+func newWebsocketStream(wsConn *websocket.Conn, wsChan chan []byte) *WebsocketStream {
+	return &WebsocketStream{
+		Ws:        wsConn,
+		WsChannel: wsChan,
+	}
+}
+
 // Close closes the websocket connection
 func (w *WebsocketStream) Close() error {
 	err := w.Ws.Close()
