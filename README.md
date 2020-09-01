@@ -1,6 +1,9 @@
 # tweets en vivo
 
-stream tweets to your terminal based on rules (using the Twitter v2 API)
+stream tweets to your terminal based on rules (using the [Twitter v2 API](https://developer.twitter.com/en/docs/twitter-api/early-access))
+
+(I know there are good alternatives to this such as [tweetdeck]([https://tweetdeck.twitter.com/]) or for a 
+Go library, [go-twitter](https://github.com/dghubble/go-twitter/). This project is just for fun.)
 
 > the rules must follow Twitter's documentation. You can put your rules in the `/rules` directory and if desired,
 you can place "private rules" (not tracked by git) in the `/rules/private/` directory.
@@ -84,7 +87,7 @@ NOTE: the help "menu" is also displayed if you type in a command that does not e
 
 ## twitter API documentation
 - [filtered streams - rules](https://developer.twitter.com/en/docs/twitter-api/tweets/filtered-stream/integrate/build-a-rule)
-- 
+
 
 ### twitter API endpoints
 v2 endpoints (base url = https://api.twitter.com/2/)
@@ -93,18 +96,11 @@ v2 endpoints (base url = https://api.twitter.com/2/)
 - `POST /tweets/search/stream/rules`
 
 
-## helpful development commands
-```bash
-go build
-```
-
-```bash
-go mod tidy
-```
-
 ## TODOs
 - write tests!
+- customize the tweet fields retrieved (right now it is decently hard coded to fields I care about)
 - format the printing to terminal
 - lots of refactoring/cleanup
 - refactor all of the tweet/response typings
 - make the websocket server cancelable
+- add the ability to add/delete stream rules from the frontend
