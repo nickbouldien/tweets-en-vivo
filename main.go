@@ -22,9 +22,10 @@ type Client struct {
 }
 
 const (
-	ApiToken      = "API_TOKEN"
 	websocketAddr = ":5000"
 )
+
+var ApiToken string
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
@@ -33,6 +34,14 @@ var upgrader = websocket.Upgrader{
 		// FIXME - range over a list of accepted origins
 		return true
 	},
+}
+
+type Options struct {
+	command         string
+	createWebsocket bool
+	dryRun          bool
+	file            string
+	ruleIDs         []string
 }
 
 func main() {
@@ -53,33 +62,48 @@ func main() {
 	flag.Parse()
 	ruleIDs := flag.Args()
 
-	fmt.Println("--> file:", *file)
-	fmt.Println("--> command:", *command)
+	options := Options{
+		command:         *command,
+		createWebsocket: *createWebsocket,
+		file:            *file,
+		dryRun:          *dryRun,
+		ruleIDs:         ruleIDs,
+	}
 
-	token := os.Getenv(ApiToken)
-	if token == "" {
+	fmt.Println("--> file:", options.file)
+	fmt.Println("--> command:", options.command)
+
+	ApiToken = os.Getenv("API_TOKEN")
+	if ApiToken == "" {
 		log.Fatal(`make sure that you have filled in the required
 				api credentials in the .env file`)
 	}
 
+	var wg sync.WaitGroup
+
+	handleCommand(options, &wg)
+
+	wg.Wait()
+}
+
+func handleCommand(options Options, wg *sync.WaitGroup) {
+
 	client := &Client{
-		fmt.Sprint("Bearer ", token),
+		fmt.Sprint("Bearer ", ApiToken),
 		&http.Client{},
 		nil,
 		nil,
 	}
 
-	var wg sync.WaitGroup
-
-	switch *command {
+	switch options.command {
 	case "add":
-		handleAddRulesCommand(client, *file, *dryRun)
+		handleAddRulesCommand(client, options.file, options.dryRun)
 	case "check":
 		// check/verify the rules
 		handleCheckRulesCommand(client)
 	case "delete":
 		// delete the rules with ids passed in as args
-		handleDeleteCommand(client, ruleIDs)
+		handleDeleteCommand(client, options.ruleIDs)
 	case "delete-all":
 		// delete all of the current rules
 		handleDeleteAllCommand(client)
@@ -89,9 +113,9 @@ func main() {
 		return
 	case "stream":
 		// subscribe to the feed
-		fmt.Println("createWebsocket: ", *createWebsocket)
+		fmt.Println("createWebsocket: ", options.createWebsocket)
 
-		if *createWebsocket {
+		if options.createWebsocket {
 			wg.Add(1)
 			// only start the websocket connection if the -websocket arg is present
 			http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
@@ -126,7 +150,6 @@ func main() {
 		handleHelpCommand()
 		os.Exit(1)
 	}
-	wg.Wait()
 }
 
 func websocketWriter(ws *websocket.Conn, ch <-chan []byte) {

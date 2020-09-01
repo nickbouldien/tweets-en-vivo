@@ -10,6 +10,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+
+	"github.com/gorilla/websocket"
 )
 
 const (
@@ -86,6 +88,21 @@ type Tweet struct {
 //	Data          StreamTweet `json:"data"`
 //	MatchingRules []Rule      `json:"matching_rules"`
 //}
+
+// connects with the twitter API
+type TwitterClient struct {
+	apiToken   string
+	httpClient *http.Client
+}
+
+type Stream struct {
+}
+
+// handles the websocket connection
+type WebsocketStream struct {
+	Ws        *websocket.Conn
+	WsChannel chan []byte
+}
 
 type StreamResponseBodyReader struct {
 	reader *bufio.Reader

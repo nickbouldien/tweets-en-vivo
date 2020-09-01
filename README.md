@@ -31,7 +31,7 @@ list of available commands:
 ### details and examples for each command:
 
 #### add
-this command allows you to add rules to the stream.  NOTE: passing a file is optional. the default file is `rules.json`
+this command allows you to add rules to the stream.  NOTE: passing a file is optional. the default file is `rules/rules.json`.
 ```bash
 # assuming the files lives in the `rules/` directory
 ./tweets-en-vivo -command=add -file=my-rules.json
