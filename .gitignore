@@ -11,3 +11,5 @@ dist/
 
 # hide "private" rules in the rules/private/ directory
 /rules/private/
+
+.DS_Store

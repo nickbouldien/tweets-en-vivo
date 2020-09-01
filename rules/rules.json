@@ -1,7 +1,7 @@
 {
   "add": [
-    { "value": "#golang", "tag":  "#golang" },
-    { "value": "#python", "tag":  "#python" },
-    { "value": "#vue", "tag":  "#vue" }
+    { "value": "#golang", "tag": "#golang" },
+    { "value": "#python", "tag": "#python" },
+    { "value": "#vue", "tag": "#vue" }
   ]
 }

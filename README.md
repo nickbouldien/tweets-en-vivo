@@ -1,9 +1,12 @@
 # tweets en vivo
 
-stream tweets to your terminal based on rules
+stream tweets to your terminal based on rules (using the Twitter v2 API)
 
 > the rules must follow Twitter's documentation. You can put your rules in the `/rules` directory and if desired,
 you can place "private rules" (not tracked by git) in the `/rules/private/` directory.
+
+## quick demo
+![tweets-en-vivo demo](https://github.com/nickbouldien/tweets-en-vivo/demo.gif)
 
 
 ## commands
@@ -75,6 +78,10 @@ NOTE: the help "menu" is also displayed if you type in a command that does not e
 ```
 
 
+## frontend documentation
+[frontend readme](./frontend/README.md)
+
+
 ## twitter API documentation
 - [filtered streams - rules](https://developer.twitter.com/en/docs/twitter-api/tweets/filtered-stream/integrate/build-a-rule)
 - 
@@ -101,4 +108,3 @@ go mod tidy
 - lots of refactoring/cleanup
 - refactor all of the tweet/response typings
 - make the websocket server cancelable
-
