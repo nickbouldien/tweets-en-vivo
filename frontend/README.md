@@ -19,3 +19,6 @@ yarn build
 ```
 yarn test:unit
 ```
+
+## resources
+- [www.bestcssbuttongenerator.com/](https://www.bestcssbuttongenerator.com/#/28)

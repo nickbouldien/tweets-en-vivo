@@ -1,15 +1,21 @@
 <template>
   <li class="tweet">
-    <a :href="'https://twitter.com/' + tweet.authorUsername" target="_blank">
+    <a
+      :href="'https://twitter.com/' + tweet.authorUsername"
+      target="_blank"
+      rel="noopener"
+    >
       <span class="username">@{{ tweet.authorUsername }}</span>
-      <span class=""> · </span>
+      <span> · </span>
       <span class="name">{{ tweet.authorName }}</span>
     </a>
     <br />
+    <!-- TODO - display the time the tweet was created -->
     <a
       :href="'https://twitter.com/' + tweet.authorUsername + '/status/' + tweet.id"
       class="tweet-text"
       target="_blank"
+      rel="noopener"
     >
       {{ tweet.text }}
     </a>
@@ -20,7 +26,7 @@
 import Vue from 'vue';
 import { Component, Prop } from 'vue-property-decorator';
 
-import { ITweet } from '@/store/main/state';
+import { ITweet } from '@/types';
 
 @Component({
   name: 'Tweet',
@@ -49,8 +55,9 @@ a {
 
 .tweet {
   background-color: #f6f8fa;
-  padding: 8px 4px;
+  border-radius: 10px;
   margin: 6px 0;
+  padding: 8px;
 }
 
 .tweet-text {

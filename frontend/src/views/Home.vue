@@ -1,21 +1,31 @@
 <template>
   <div class="home">
-    <img alt="Vue logo" src="../assets/logo.png">
-    <!-- <HelloWorld msg="Welcome to Your Vue.js + TypeScript App"/> -->
+    <Welcome />
+    <hr />
     <TweetList />
   </div>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import HelloWorld from '@/components/HelloWorld.vue';
+import Welcome from '@/components/Welcome.vue';
 import TweetList from '@/components/TweetList.vue';
 
 @Component({
   components: {
-    HelloWorld,
     TweetList,
+    Welcome,
   },
 })
 export default class Home extends Vue {}
 </script>
+
+<style lang="scss" scoped>
+/* TODO - get rid of this? */
+hr {
+  border: 0;
+  height: 1px;
+  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.1));
+  width: 80%;
+}
+</style>

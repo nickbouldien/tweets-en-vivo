@@ -1,16 +1,14 @@
 <template>
-  <div id="tweet-list">
+  <section id="tweet-list">
     <h2>Tweets</h2>
-    <p>
-      websocket connection: {{ connectionOpen }}
-    </p>
-    <div v-if="error != null">
-      <pre>
-        {{ error.toString() }}
-      </pre>
-    </div>
 
-    <!-- <button v-on:click="openConnection">Open the websocket connection</button> -->
+    <ConnectionInfo
+      :error=error
+      :websocketOpen=Boolean(socket)
+      @toggleWebsocket="toggleConnection"
+    />
+
+    <!-- TODO - have a section to display the current stream/tweet "rules" -->
 
     <ul class="tweets">
       <Tweet
@@ -19,35 +17,42 @@
         :tweet="tweet"
       />
     </ul>
-  </div>
+  </section>
 </template>
 
 <script lang="ts">
 import Vue from 'vue';
 import { Component, Watch } from 'vue-property-decorator';
 
+import ConnectionInfo from '@/components/ConnectionInfo.vue'
 import Tweet from '@/components/Tweet.vue'
 import { websocketUrl } from '@/config';
-import { ITweet, ITweetResponse } from '@/store/main/state';
-import { tweetResponses } from '../data'
+import { ITweet, ITweetResponse } from '@/types';
+import { tweetResponses } from '@/data';
 
 @Component({
   components: {
+    ConnectionInfo,
     Tweet,
   }
 })
 export default class TweetList extends Vue {
   error: Error | null = null;
-  tweets: ITweet[] = [];
   socket: WebSocket | null = null;
+  tweets: ITweet[] = [];
 
   mounted() {
-    this.error = null;
-    this.tweets = tweetResponses.map(tweetResponse => this.mapTweetResponseToTweet(tweetResponse))
-    this.socket = null;
+    // TODO - remove this. this is only for dev/debugging
+    this.tweets = tweetResponses.map(tweetResponse => this.mapTweetResponseToTweet(tweetResponse));
   }
 
-  created() {
+  toggleConnection() {
+    if (this.socket) {
+      // close the socket if it already exists
+      console.log("this.socket exists: ", this.socket);
+      this.socket.close();
+      this.socket = null;
+    }
     this.createWebSocketConnection();
   }
 
@@ -70,32 +75,26 @@ export default class TweetList extends Vue {
   }
 
   createWebSocketConnection(): void {
-    console.log("Starting connection to WebSocket Server");
+    console.log("=> starting the connection to the websocket");
     this.socket = new WebSocket(websocketUrl);
 
     // register websocket event listeners/handlers
     this.socket.onopen = (event: Event) => {
       console.log('socket opened: ', this.socket);
+      this.error = null;
     }
 
     this.socket.onmessage = (event: MessageEvent) => {
       let tweetResponse: ITweetResponse;
-      let tweet: ITweet;
-      try {
-        console.log("event.data: ", event.data);
-        tweetResponse = JSON.parse(event.data)
-        
-        console.log("tweetResponse: ", tweetResponse);
-        tweet = tweetResponse.data;
-        let author = tweetResponse.includes.users && tweetResponse.includes.users[0];
-        if (author) {
-          tweet.authorUsername = author.username;
-          tweet.authorName = author.name;
-        }
-        console.log("tweet: ", tweet);
 
-        this.tweets.push(tweet);
+      try {
+        tweetResponse = JSON.parse(event.data)
+        let tweet: ITweet = this.mapTweetResponseToTweet(tweetResponse);
+        console.log("==> tweet: ", tweet);
+        // FIXME - better (more efficient) way to do this?
+        this.tweets.unshift(tweet);
       } catch(err) {
+        console.error("error parsing the websocket message");
         this.error = err;
       }
     }
@@ -107,24 +106,25 @@ export default class TweetList extends Vue {
 
     this.socket.onclose = (event: CloseEvent) => {
       console.warn("--> socket closed");
+      this.error = null;
       this.socket = null;
       console.warn("--> this.socket: ", this.socket);
     }
   }
-
-  get connectionOpen(): string {
-    console.log("connectionOpen ", this.socket);
-    return this.socket === null ? "open" : "closed";
-  }
 }
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
 #tweet-list {
+  border-radius: 10px;
+  padding: 12px;
   text-align: left;
 }
 
 ul {
+  height: 50vh;
   list-style: none;
+  overflow-y: scroll;
+  padding-left: 0;
 }
 </style>

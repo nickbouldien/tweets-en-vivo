@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -89,6 +90,46 @@ type Tweet struct {
 type StreamResponseBodyReader struct {
 	reader *bufio.Reader
 	buf    bytes.Buffer
+}
+
+// Read is a helper function to read the data from the stream
+func (r *StreamResponseBodyReader) Read() ([]byte, error) {
+	r.buf.Truncate(0)
+
+	for {
+		line, err := r.reader.ReadBytes('\n')
+
+		if len(line) == 0 {
+			fmt.Println("len(line) == 0")
+			continue
+		}
+
+		if err != nil && err != io.EOF {
+			// all errors other than the end of file error
+			_ = fmt.Errorf("read error: %v", err)
+			return nil, err
+		}
+
+		if err == io.EOF && len(line) == 0 {
+			_ = fmt.Errorf("io.EOF && len(line): %v", err)
+
+			if r.buf.Len() == 0 {
+				_ = fmt.Errorf("buf.Len() : %v", err)
+				return nil, err
+			}
+			fmt.Println("breaking")
+			break
+		}
+
+		if bytes.HasSuffix(line, []byte("\r\n")) {
+			r.buf.Write(bytes.TrimRight(line, "\r\n"))
+			break
+		}
+
+		r.buf.Write(line)
+	}
+
+	return r.buf.Bytes(), nil
 }
 
 // FetchStream gets the main stream of tweets that match the current rules
