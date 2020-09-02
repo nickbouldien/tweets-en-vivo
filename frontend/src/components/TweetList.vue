@@ -16,6 +16,7 @@
         :key="tweet.id"
         :tweet="tweet"
       />
+      <!-- TODO - add a message if there are no tweets -->
     </ul>
   </section>
 </template>

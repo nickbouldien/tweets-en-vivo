@@ -10,6 +10,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+
+	"github.com/logrusorgru/aurora"
 )
 
 const (
@@ -293,13 +295,14 @@ func (client *Client) DeleteStreamRules(ruleIDs TweetIDs) (*DeleteRulesResponse,
 	return &deleteRulesResponse, nil
 }
 
+// Print prints a tweet with formatting/colors
 func (t *Tweet) Print() {
-	s, err := json.MarshalIndent(t, "", "\t")
-	if err != nil {
-		_ = fmt.Errorf("error creating the data to print: %v", err)
-	}
-
-	fmt.Println(string(s))
+	fmt.Printf("%s - %s\n %s\n %s\n\n",
+		aurora.Blue("@"+t.AuthorUsername),
+		aurora.Cyan(t.AuthorName),
+		aurora.White(t.Text),
+		aurora.Green(t.TweetURL),
+	)
 }
 
 func handleTweetData(wsStream *WebsocketStream, data []byte) {
@@ -313,8 +316,8 @@ func handleTweetData(wsStream *WebsocketStream, data []byte) {
 	// TODO - check if this is safe based on the twitter docs
 	author := streamData.Includes["users"][0]
 
-	tweetURL := fmt.Sprint("https://twitter.com/", author.Username)
-	userURL := fmt.Sprint("https://twitter.com/", author.Username, "/status/", streamData.Data.ID)
+	userURL := fmt.Sprint("https://twitter.com/", author.Username)
+	tweetURL := fmt.Sprint("https://twitter.com/", author.Username, "/status/", streamData.Data.ID)
 
 	t := Tweet{
 		AuthorID:       author.ID,
