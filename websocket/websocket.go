@@ -45,17 +45,6 @@ func NewStream(wsConn *websocket.Conn, wsChan chan []byte) *Stream {
 	}
 }
 
-// Close closes the websocket connection
-func (w *Stream) close() error {
-	err := w.WsConn.Close()
-	//close(w.WsChannel)
-
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // Handler handles the data received from the channel
 func (w *Stream) Handler(ch <-chan []byte) {
 	defer func() {
@@ -73,6 +62,17 @@ func (w *Stream) Handler(ch <-chan []byte) {
 			w.write(data)
 		}
 	}
+}
+
+// Close closes the websocket connection
+func (w *Stream) close() error {
+	err := w.WsConn.Close()
+	//close(w.WsChannel)
+
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // Write writes data to the websocket connection
