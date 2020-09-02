@@ -96,12 +96,19 @@ v2 endpoints (base url = https://api.twitter.com/2/)
 - `POST /tweets/search/stream/rules`
 
 
+### resources
+- [go-twitter](https://github.com/dghubble/go-twitter)
+
+
 ## TODOs
 - write tests!
 - customize the tweet fields retrieved (right now it is decently hard coded to fields I care about)
+- customize the tweet filter params (language, location, etc.)
 - format the printing to terminal
 - need better file/code organization
 - lots of refactoring/cleanup
 - refactor all of the tweet/response typings
 - make the websocket server cancelable
 - add the ability to add/delete stream rules from the frontend
+- add "hooks" to intercept a tweet and do something with it
+- clean up the http requests (there is a lot of duplication)

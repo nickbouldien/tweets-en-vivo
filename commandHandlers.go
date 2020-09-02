@@ -132,7 +132,7 @@ func handleDeleteAllCommand(client *Client) {
 		log.Fatal(e)
 	}
 
-	printData := map[string][]Tweet{
+	printData := map[string][]SimpleTweet{
 		"currentRules": currentRules.Data,
 	}
 

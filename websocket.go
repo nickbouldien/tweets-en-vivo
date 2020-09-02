@@ -52,6 +52,10 @@ func (w *WebsocketStream) Handler(ch <-chan []byte) {
 
 // Write writes data to the websocket connection
 func (w *WebsocketStream) Write(data []byte) {
+	//b, err := json.Marshal(data); if err != nil {
+	//	fmt.Println("error marshalling the data to a slice of bytes")
+	//}
+
 	if err := w.WsConn.WriteMessage(websocket.TextMessage, data); err != nil {
 		_ = fmt.Errorf("error writing the message to the websocket: %v", err)
 		return

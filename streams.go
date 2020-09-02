@@ -22,8 +22,8 @@ const (
 // FIXME - refactor all of the structs to make clearer and remove duplication
 
 type AddRulesResponse struct {
-	Meta AddRulesMeta `json:"meta"`
-	Data []Tweet      `json:"data"`
+	Meta AddRulesMeta  `json:"meta"`
+	Data []SimpleTweet `json:"data"`
 }
 
 type AddRulesSummary struct {
@@ -55,43 +55,60 @@ type DeleteRules struct {
 }
 
 type FetchRulesResponse struct {
-	Data []Tweet           `json:"data"`
+	Data []SimpleTweet     `json:"data"`
 	Meta map[string]string `json:"meta"`
 }
 
 type TweetIDs []string
 
-type Tweet struct {
+type SimpleTweet struct {
 	ID    string `json:"id"`
 	Tag   string `json:"tag,omitempty"`
 	Value string `json:"value"`
 }
 
-//type Rule struct {
-//	ID    string `json:"id"`
-//	Value string `json:"value"`
-//}
+type Tweet struct {
+	AuthorID       string         `json:"authorId"`
+	AuthorName     string         `json:"authorName"`
+	AuthorUsername string         `json:"authorUsername"`
+	CreatedAt      string         `json:"created_at"`
+	ID             string         `json:"id"`
+	MatchingRules  []MatchingRule `json:"matching_rules"`
+	//Tag            string         `json:"tag,omitempty"`
+	Text     string `json:"text"`
+	TweetURL string `json:"tweetUrl"`
+	UserURL  string `json:"userUrl"`
+}
 
-//type MatchingRule struct {
-//	ID  string `json:"id"`
-//	Tag string `json:"tag"`
-//}
+type MatchingRule struct {
+	ID  int64  `json:"id"`
+	Tag string `json:"tag"`
+}
 
-//type StreamTweet struct {
-//	ID   string `json:"id"`
-//	Text string `json:"text"`
-//}
+type StreamTweet struct {
+	ID        string `json:"id"`
+	Text      string `json:"text"`
+	CreatedAt string `json:"created_at"`
+	AuthorID  string `json:"author_id"`
+}
 
-//type StreamData struct {
-//	Data          StreamTweet `json:"data"`
-//	MatchingRules []Rule      `json:"matching_rules"`
-//}
+type User struct {
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Username string `json:"username"`
+}
+
+type StreamData struct {
+	Data          StreamTweet       `json:"data"`
+	MatchingRules []MatchingRule    `json:"matching_rules"`
+	Includes      map[string][]User `json:"includes"`
+}
 
 // TwitterClient connects with the twitter API
-type TwitterClient struct {
-	apiToken   string
-	httpClient *http.Client
-}
+//type TwitterClient struct {
+//	apiToken   string
+//	httpClient *http.Client
+//}
 
 type StreamResponseBodyReader struct {
 	reader *bufio.Reader
@@ -172,7 +189,7 @@ func (client *Client) FetchStream(ch chan<- []byte) {
 	}
 }
 
-// CheckCurrentRules fetches the current rules that are persisted
+// FetchCurrentRules fetches the current rules that are persisted
 func (client *Client) FetchCurrentRules() (*FetchRulesResponse, error) {
 	req, err := http.NewRequest(http.MethodGet, rulesURL, nil)
 	req.Header.Add("Authorization", client.ApiToken)
@@ -276,17 +293,51 @@ func (client *Client) DeleteStreamRules(ruleIDs TweetIDs) (*DeleteRulesResponse,
 	return &deleteRulesResponse, nil
 }
 
+func (t *Tweet) Print() {
+	s, err := json.MarshalIndent(t, "", "\t")
+	if err != nil {
+		_ = fmt.Errorf("error creating the data to print: %v", err)
+	}
+
+	fmt.Println(string(s))
+}
+
 func handleTweetData(wsStream *WebsocketStream, data []byte) {
-	//var tweet Tweet
-	//err := json.Unmarshal(data, &tweet)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
+	var streamData StreamData
+	err := json.Unmarshal(data, &streamData)
+	if err != nil {
+		_ = fmt.Errorf("error converting the data to a Tweet: %v", err)
+		log.Fatal(err)
+	}
+
+	// TODO - check if this is safe based on the twitter docs
+	author := streamData.Includes["users"][0]
+
+	tweetURL := fmt.Sprint("https://twitter.com/", author.Username)
+	userURL := fmt.Sprint("https://twitter.com/", author.Username, "/status/", streamData.Data.ID)
+
+	t := Tweet{
+		AuthorID:       author.ID,
+		AuthorName:     author.Name,
+		AuthorUsername: author.Username,
+		CreatedAt:      streamData.Data.CreatedAt,
+		ID:             streamData.Data.ID,
+		MatchingRules:  streamData.MatchingRules,
+		Text:           streamData.Data.Text,
+		TweetURL:       tweetURL,
+		UserURL:        userURL,
+	}
+
+	b, err := json.Marshal(t)
+	if err != nil {
+		_ = fmt.Errorf("error marshalling the data to a slice of bytes")
+		return
+	}
 
 	if wsStream != nil {
 		// if there is an open websocket connection, send the data to it
-		wsStream.WsChannel <- data
+		wsStream.WsChannel <- b
 	}
 
-	PrettyPrintByteSlice(data)
+	t.Print()
 }

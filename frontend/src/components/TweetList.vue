@@ -27,7 +27,7 @@ import { Component, Watch } from 'vue-property-decorator';
 import ConnectionInfo from '@/components/ConnectionInfo.vue'
 import Tweet from '@/components/Tweet.vue'
 import { websocketUrl } from '@/config';
-import { ITweet, ITweetResponse } from '@/types';
+import { ITweet } from '@/types';
 import { tweetResponses } from '@/data';
 
 @Component({
@@ -41,10 +41,10 @@ export default class TweetList extends Vue {
   socket: WebSocket | null = null;
   tweets: ITweet[] = [];
 
-  mounted() {
-    // TODO - remove this. this is only for dev/debugging
-    this.tweets = tweetResponses.map(tweetResponse => this.mapTweetResponseToTweet(tweetResponse));
-  }
+  // mounted() {
+  //   // TODO - remove this. this is only for dev/debugging
+  //   this.tweets = tweetResponses.map(tweetResponse => this.mapTweetResponseToTweet(tweetResponse));
+  // }
 
   toggleConnection() {
     if (this.socket) {
@@ -54,24 +54,6 @@ export default class TweetList extends Vue {
       this.socket = null;
     }
     this.createWebSocketConnection();
-  }
-
-  mapTweetResponseToTweet(tweetResponse: ITweetResponse): ITweet {
-    let author = tweetResponse.includes.users && tweetResponse.includes.users[0];
-    let tweetData = tweetResponse.data;
-
-    let tweet: ITweet = {
-      id: tweetData.id,
-      text: tweetData.text,
-      tag: tweetData.tag,
-      authorId: tweetData.id,
-      createdAt: tweetData.createdAt,
-      authorUsername: author.username,
-      authorName: author.name,
-      matchingRules: tweetResponse.matching_rules,
-    }
-
-    return tweet;
   }
 
   createWebSocketConnection(): void {
@@ -85,11 +67,10 @@ export default class TweetList extends Vue {
     }
 
     this.socket.onmessage = (event: MessageEvent) => {
-      let tweetResponse: ITweetResponse;
+      let tweet: ITweet;
 
       try {
-        tweetResponse = JSON.parse(event.data)
-        let tweet: ITweet = this.mapTweetResponseToTweet(tweetResponse);
+        tweet = JSON.parse(event.data)
         console.log("==> tweet: ", tweet);
         // FIXME - better (more efficient) way to do this?
         this.tweets.unshift(tweet);

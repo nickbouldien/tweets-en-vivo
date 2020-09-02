@@ -1,7 +1,8 @@
 <template>
   <li class="tweet">
+      <!-- :href="'https://twitter.com/' + tweet.authorUsername" -->
     <a
-      :href="'https://twitter.com/' + tweet.authorUsername"
+      :href="tweet.userUrl"
       target="_blank"
       rel="noopener"
     >
@@ -11,8 +12,9 @@
     </a>
     <br />
     <!-- TODO - display the time the tweet was created -->
+    <!-- :href="'https://twitter.com/' + tweet.authorUsername + '/status/' + tweet.id" -->
     <a
-      :href="'https://twitter.com/' + tweet.authorUsername + '/status/' + tweet.id"
+      :href="tweet.tweetUrl"
       class="tweet-text"
       target="_blank"
       rel="noopener"
