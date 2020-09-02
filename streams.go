@@ -61,30 +61,15 @@ type FetchRulesResponse struct {
 	Meta map[string]string `json:"meta"`
 }
 
-type TweetIDs []string
+type MatchingRule struct {
+	ID  int64  `json:"id"`
+	Tag string `json:"tag"`
+}
 
 type SimpleTweet struct {
 	ID    string `json:"id"`
 	Tag   string `json:"tag,omitempty"`
 	Value string `json:"value"`
-}
-
-type Tweet struct {
-	AuthorID       string         `json:"authorId"`
-	AuthorName     string         `json:"authorName"`
-	AuthorUsername string         `json:"authorUsername"`
-	CreatedAt      string         `json:"created_at"`
-	ID             string         `json:"id"`
-	MatchingRules  []MatchingRule `json:"matching_rules"`
-	//Tag            string         `json:"tag,omitempty"`
-	Text     string `json:"text"`
-	TweetURL string `json:"tweetUrl"`
-	UserURL  string `json:"userUrl"`
-}
-
-type MatchingRule struct {
-	ID  int64  `json:"id"`
-	Tag string `json:"tag"`
 }
 
 type StreamTweet struct {
@@ -94,23 +79,31 @@ type StreamTweet struct {
 	AuthorID  string `json:"author_id"`
 }
 
-type User struct {
-	ID       string `json:"id"`
-	Name     string `json:"name"`
-	Username string `json:"username"`
-}
-
 type StreamData struct {
 	Data          StreamTweet       `json:"data"`
 	MatchingRules []MatchingRule    `json:"matching_rules"`
 	Includes      map[string][]User `json:"includes"`
 }
 
-// TwitterClient connects with the twitter API
-//type TwitterClient struct {
-//	apiToken   string
-//	httpClient *http.Client
-//}
+type TweetIDs []string
+
+type Tweet struct {
+	AuthorID       string         `json:"authorId"`
+	AuthorName     string         `json:"authorName"`
+	AuthorUsername string         `json:"authorUsername"`
+	CreatedAt      string         `json:"created_at"`
+	ID             string         `json:"id"`
+	MatchingRules  []MatchingRule `json:"matching_rules"`
+	Text           string         `json:"text"`
+	TweetURL       string         `json:"tweetUrl"`
+	UserURL        string         `json:"userUrl"`
+}
+
+type User struct {
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Username string `json:"username"`
+}
 
 type StreamResponseBodyReader struct {
 	reader *bufio.Reader
@@ -157,13 +150,27 @@ func (r *StreamResponseBodyReader) Read() ([]byte, error) {
 	return r.buf.Bytes(), nil
 }
 
+// TwitterClient connects with the twitter API
+type TwitterClient struct {
+	apiToken   string
+	httpClient *http.Client
+}
+
+// newClient creates a new Client
+func newClient(token string) *TwitterClient {
+	return &TwitterClient{
+		apiToken:   token,
+		httpClient: &http.Client{},
+	}
+}
+
 // FetchStream gets the main stream of tweets that match the current rules
-func (client *Client) FetchStream(ch chan<- []byte) {
+func (client *TwitterClient) FetchStream(ch chan<- []byte) {
 	req, err := http.NewRequest(http.MethodGet, streamURL, nil)
 	if err != nil {
 		_ = fmt.Errorf("error creating the FetchStream request: %v", err)
 	}
-	req.Header.Add("Authorization", client.ApiToken)
+	req.Header.Add("Authorization", client.apiToken)
 
 	resp, err := client.httpClient.Do(req)
 	if err != nil {
@@ -182,7 +189,6 @@ func (client *Client) FetchStream(ch chan<- []byte) {
 		}
 
 		if len(data) == 0 {
-			fmt.Println("the data is empty")
 			continue
 		}
 
@@ -192,9 +198,9 @@ func (client *Client) FetchStream(ch chan<- []byte) {
 }
 
 // FetchCurrentRules fetches the current rules that are persisted
-func (client *Client) FetchCurrentRules() (*FetchRulesResponse, error) {
+func (client *TwitterClient) FetchCurrentRules() (*FetchRulesResponse, error) {
 	req, err := http.NewRequest(http.MethodGet, rulesURL, nil)
-	req.Header.Add("Authorization", client.ApiToken)
+	req.Header.Add("Authorization", client.apiToken)
 
 	resp, err := client.httpClient.Do(req)
 
@@ -221,14 +227,14 @@ func (client *Client) FetchCurrentRules() (*FetchRulesResponse, error) {
 }
 
 // AddRules adds new rules for the stream. `dryRun` is used to verify the rules, but not persist them
-func (client *Client) AddRules(jsonBody []byte, dryRun bool) (*AddRulesResponse, error) {
+func (client *TwitterClient) AddRules(jsonBody []byte, dryRun bool) (*AddRulesResponse, error) {
 	url := rulesURL
 	if dryRun {
 		url = url + "?dry_run=true"
 	}
 
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(jsonBody))
-	req.Header.Add("Authorization", client.ApiToken)
+	req.Header.Add("Authorization", client.apiToken)
 	req.Header.Add("Content-type", "application/json")
 
 	resp, err := client.httpClient.Do(req)
@@ -254,7 +260,7 @@ func (client *Client) AddRules(jsonBody []byte, dryRun bool) (*AddRulesResponse,
 }
 
 // DeleteStreamRules deletes persisted rules by rule id
-func (client *Client) DeleteStreamRules(ruleIDs TweetIDs) (*DeleteRulesResponse, error) {
+func (client *TwitterClient) DeleteStreamRules(ruleIDs TweetIDs) (*DeleteRulesResponse, error) {
 	fmt.Println("ids to delete: ", ruleIDs)
 	if len(ruleIDs) == 0 {
 		return nil, errors.New("you must pass in stream rule ids to delete")
@@ -270,7 +276,7 @@ func (client *Client) DeleteStreamRules(ruleIDs TweetIDs) (*DeleteRulesResponse,
 	}
 
 	req, err := http.NewRequest(http.MethodPost, rulesURL, bytes.NewBuffer(rulesToDeleteJSON))
-	req.Header.Add("Authorization", client.ApiToken)
+	req.Header.Add("Authorization", client.apiToken)
 	req.Header.Add("Content-type", "application/json")
 
 	resp, err := client.httpClient.Do(req)
@@ -297,11 +303,15 @@ func (client *Client) DeleteStreamRules(ruleIDs TweetIDs) (*DeleteRulesResponse,
 
 // Print prints a tweet with formatting/colors
 func (t *Tweet) Print() {
+	authorNameRunes := []rune(t.AuthorName)
+	authorUsernameRunes := []rune(t.AuthorUsername)
+	textRunes := []rune(t.Text)
+
 	fmt.Printf("%s - %s\n %s\n %s\n\n",
-		aurora.Blue("@"+t.AuthorUsername),
-		aurora.Cyan(t.AuthorName),
-		aurora.White(t.Text),
-		aurora.Green(t.TweetURL),
+		aurora.Blue("@"+string(authorUsernameRunes)),
+		aurora.Cyan(string(authorNameRunes)),
+		aurora.White(string(textRunes)),
+		aurora.Underline(aurora.Green(t.TweetURL)),
 	)
 }
 
@@ -338,7 +348,7 @@ func handleTweetData(wsStream *WebsocketStream, data []byte) {
 	}
 
 	if wsStream != nil {
-		// if there is an open websocket connection, send the data to it
+		// if there is an open websocket connection, send the data to its channel
 		wsStream.WsChannel <- b
 	}
 

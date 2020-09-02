@@ -12,19 +12,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type Client struct {
-	ApiToken   string
-	httpClient *http.Client
-}
-
-// newClient creates a new Client
-func newClient(token string) *Client {
-	return &Client{
-		ApiToken:   token,
-		httpClient: &http.Client{},
-	}
-}
-
 func handleCLICommand(options Options, wg *sync.WaitGroup) {
 	token := fmt.Sprint("Bearer ", ApiToken)
 	client := newClient(token)
@@ -48,6 +35,8 @@ func handleCLICommand(options Options, wg *sync.WaitGroup) {
 	case "stream":
 		// subscribe to the feed
 		fmt.Println("createWebsocket: ", options.createWebsocket)
+
+		// FIXME - clean all of this up
 
 		if options.createWebsocket {
 			wg.Add(1)
@@ -84,7 +73,7 @@ func handleCLICommand(options Options, wg *sync.WaitGroup) {
 	}
 }
 
-func handleAddRulesCommand(client *Client, filename string, dryRun bool) {
+func handleAddRulesCommand(client *TwitterClient, filename string, dryRun bool) {
 	// first: import the rules json file
 	file, err := os.Open(path.Join("rules/", filename))
 	if err != nil {
@@ -105,7 +94,7 @@ func handleAddRulesCommand(client *Client, filename string, dryRun bool) {
 	PrettyPrint(rules)
 }
 
-func handleCheckRulesCommand(client *Client) {
+func handleCheckRulesCommand(client *TwitterClient) {
 	rules, err := client.FetchCurrentRules()
 	if err != nil {
 		log.Fatal(err)
@@ -113,7 +102,7 @@ func handleCheckRulesCommand(client *Client) {
 	PrettyPrint(rules)
 }
 
-func handleDeleteCommand(client *Client, ids TweetIDs) {
+func handleDeleteCommand(client *TwitterClient, ids TweetIDs) {
 	if len(ids) == 0 {
 		log.Fatal("you must supply a list of rule ids to delete")
 	}
@@ -125,7 +114,7 @@ func handleDeleteCommand(client *Client, ids TweetIDs) {
 	PrettyPrint(rules)
 }
 
-func handleDeleteAllCommand(client *Client) {
+func handleDeleteAllCommand(client *TwitterClient) {
 	// first: get all the current rule ids
 	currentRules, e := client.FetchCurrentRules()
 	if e != nil {
@@ -156,7 +145,7 @@ func handleHelpCommand() {
 				"add", "check", "delete", "delete-all", and "stream"`)
 }
 
-func handleStreamCommand(client *Client, wsStream *WebsocketStream) {
+func handleStreamCommand(client *TwitterClient, wsStream *WebsocketStream) {
 	if wsStream != nil {
 		fmt.Println("there is a websocket connection open")
 		go wsStream.Handler(wsStream.WsChannel)
