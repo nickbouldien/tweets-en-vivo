@@ -7,10 +7,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-const (
-	Addr = ":5000"
-)
-
 // TODO - get from config (env variables). hard coding for now
 var AllowedOrigins = []string{
 	"http://localhost:8080",
