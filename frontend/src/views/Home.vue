@@ -21,7 +21,6 @@ export default class Home extends Vue {}
 </script>
 
 <style lang="scss" scoped>
-/* TODO - get rid of this? */
 hr {
   border: 0;
   height: 1px;

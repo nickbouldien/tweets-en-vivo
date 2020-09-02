@@ -16,6 +16,9 @@
         :key="tweet.id"
         :tweet="tweet"
       />
+      <li v-show="tweets.length === 0" class="empty-list">
+        There are no tweets to display
+      </li>
       <!-- TODO - add a message if there are no tweets -->
     </ul>
   </section>
@@ -99,8 +102,12 @@ export default class TweetList extends Vue {
 <style scoped lang="scss">
 #tweet-list {
   border-radius: 10px;
-  padding: 12px;
+  padding: 6px 12px;
   text-align: left;
+}
+
+h2 {
+  margin: 6px 0;
 }
 
 ul {
@@ -108,5 +115,12 @@ ul {
   list-style: none;
   overflow-y: scroll;
   padding-left: 0;
+}
+
+.empty-list {
+  background-color: #f6f8fa;
+  border-radius: 10px;
+  margin: 6px 0;
+  padding: 8px;
 }
 </style>
