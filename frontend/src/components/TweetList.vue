@@ -32,7 +32,6 @@ import ConnectionInfo from '@/components/ConnectionInfo.vue'
 import Tweet from '@/components/Tweet.vue'
 import { websocketUrl } from '@/config';
 import { ITweet } from '@/types';
-// import { tweets } from '@/data';
 
 @Component({
   components: {
@@ -45,15 +44,9 @@ export default class TweetList extends Vue {
   socket: WebSocket | null = null;
   tweets: ITweet[] = [];
 
-  // mounted() {
-  //   // TODO - remove this. this is only for dev/debugging
-  //   this.tweets = tweetResponses.map(tweetResponse => this.mapTweetResponseToTweet(tweetResponse));
-  // }
-
   toggleConnection() {
     if (this.socket) {
       // close the socket if it already exists
-      console.log("this.socket exists: ", this.socket);
       this.socket.close();
       this.socket = null;
     }
