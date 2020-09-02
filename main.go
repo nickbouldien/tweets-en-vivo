@@ -4,47 +4,11 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"net/http"
-	"os"
 	"sync"
+	"tweets-en-vivo/CLI"
 
-	"github.com/gorilla/websocket"
 	"github.com/joho/godotenv"
 )
-
-const (
-	websocketAddr = ":5000"
-)
-
-var ApiToken string
-
-// TODO - get from config (env variables). hard coding for now
-var AllowedOrigins = []string{
-	"http://localhost:8080",
-}
-
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-	CheckOrigin: func(r *http.Request) bool {
-		origin := r.Header.Get("Origin")
-
-		for _, allowedOrigin := range AllowedOrigins {
-			if allowedOrigin == origin {
-				return true
-			}
-		}
-		return false
-	},
-}
-
-type Options struct {
-	command         string
-	createWebsocket bool
-	dryRun          bool
-	file            string
-	ruleIDs         []string
-}
 
 func main() {
 	if err := godotenv.Load(); err != nil {
@@ -64,26 +28,20 @@ func main() {
 	flag.Parse()
 	ruleIDs := flag.Args()
 
-	options := Options{
-		command:         *command,
-		createWebsocket: *createWebsocket,
-		file:            *file,
-		dryRun:          *dryRun,
-		ruleIDs:         ruleIDs,
+	options := CLI.Options{
+		Command:         *command,
+		CreateWebsocket: *createWebsocket,
+		File:            *file,
+		DryRun:          *dryRun,
+		RuleIDs:         ruleIDs,
 	}
 
-	fmt.Println("--> file:", options.file)
-	fmt.Println("--> command:", options.command)
-
-	ApiToken = os.Getenv("API_TOKEN")
-	if ApiToken == "" {
-		log.Fatal(`make sure that you have filled in the required
-				api credentials in the .env file`)
-	}
+	fmt.Println("--> file:", options.File)
+	fmt.Println("--> command:", options.Command)
 
 	var wg sync.WaitGroup
 
-	handleCLICommand(options, &wg)
+	CLI.HandleCLICommand(options, &wg)
 
 	wg.Wait()
 }

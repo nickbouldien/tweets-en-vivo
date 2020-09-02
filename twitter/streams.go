@@ -1,4 +1,4 @@
-package main
+package twitter
 
 import (
 	"bufio"
@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	wsClient "tweets-en-vivo/websocket"
 
 	"github.com/logrusorgru/aurora"
 )
@@ -150,22 +151,22 @@ func (r *StreamResponseBodyReader) Read() ([]byte, error) {
 	return r.buf.Bytes(), nil
 }
 
-// TwitterClient connects with the twitter API
-type TwitterClient struct {
+// Client connects with the twitter API
+type Client struct {
 	apiToken   string
 	httpClient *http.Client
 }
 
-// newClient creates a new Client
-func newClient(token string) *TwitterClient {
-	return &TwitterClient{
+// NewClient creates a new Client
+func NewClient(token string) *Client {
+	return &Client{
 		apiToken:   token,
 		httpClient: &http.Client{},
 	}
 }
 
 // FetchStream gets the main stream of tweets that match the current rules
-func (client *TwitterClient) FetchStream(ch chan<- []byte) {
+func (client *Client) FetchStream(ch chan<- []byte) {
 	req, err := http.NewRequest(http.MethodGet, streamURL, nil)
 	if err != nil {
 		_ = fmt.Errorf("error creating the FetchStream request: %v", err)
@@ -198,7 +199,7 @@ func (client *TwitterClient) FetchStream(ch chan<- []byte) {
 }
 
 // FetchCurrentRules fetches the current rules that are persisted
-func (client *TwitterClient) FetchCurrentRules() (*FetchRulesResponse, error) {
+func (client *Client) FetchCurrentRules() (*FetchRulesResponse, error) {
 	req, err := http.NewRequest(http.MethodGet, rulesURL, nil)
 	req.Header.Add("Authorization", client.apiToken)
 
@@ -227,7 +228,7 @@ func (client *TwitterClient) FetchCurrentRules() (*FetchRulesResponse, error) {
 }
 
 // AddRules adds new rules for the stream. `dryRun` is used to verify the rules, but not persist them
-func (client *TwitterClient) AddRules(jsonBody []byte, dryRun bool) (*AddRulesResponse, error) {
+func (client *Client) AddRules(jsonBody []byte, dryRun bool) (*AddRulesResponse, error) {
 	url := rulesURL
 	if dryRun {
 		url = url + "?dry_run=true"
@@ -260,7 +261,7 @@ func (client *TwitterClient) AddRules(jsonBody []byte, dryRun bool) (*AddRulesRe
 }
 
 // DeleteStreamRules deletes persisted rules by rule id
-func (client *TwitterClient) DeleteStreamRules(ruleIDs TweetIDs) (*DeleteRulesResponse, error) {
+func (client *Client) DeleteStreamRules(ruleIDs TweetIDs) (*DeleteRulesResponse, error) {
 	fmt.Println("ids to delete: ", ruleIDs)
 	if len(ruleIDs) == 0 {
 		return nil, errors.New("you must pass in stream rule ids to delete")
@@ -315,7 +316,7 @@ func (t *Tweet) Print() {
 	)
 }
 
-func handleTweetData(wsStream *WebsocketStream, data []byte) {
+func HandleTweetData(wsStream *wsClient.Stream, data []byte) {
 	var streamData StreamData
 	err := json.Unmarshal(data, &streamData)
 	if err != nil {
