@@ -118,3 +118,7 @@ Here are a few:
 - make it more easily deployable (use env vars for things like ports, urls, tokens, etc.)
 - add the ability to add/delete stream rules from the frontend
 - display more tweet fields (tags, etc.) on the frontend
+
+### License
+
+[MIT License](LICENSE)
