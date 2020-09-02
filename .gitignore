@@ -10,6 +10,7 @@ node_modules/
 dist/
 
 # hide "private" rules in the rules/private/ directory
-/rules/private/
+/rules/private/*
+!/rules/private/.gitkeep
 
 .DS_Store
