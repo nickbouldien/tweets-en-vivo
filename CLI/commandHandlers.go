@@ -53,7 +53,8 @@ func HandleCLICommand(options Options, wg *sync.WaitGroup) {
 		// subscribe to the feed
 		fmt.Println("createWebsocket: ", options.CreateWebsocket)
 
-		// FIXME - clean all of this up
+		// FIXME - clean all of this up. find better way to asynchronously run the websocket server and
+		// handle the connection with the twitter API
 
 		if options.CreateWebsocket {
 			wg.Add(1)
@@ -74,7 +75,6 @@ func HandleCLICommand(options Options, wg *sync.WaitGroup) {
 
 				websocketStream := wsClient.NewStream(ws, make(chan []byte))
 
-				// TODO - fix this
 				handleStreamCommand(client, websocketStream)
 			})
 

@@ -20,8 +20,6 @@ const (
 	streamURL = baseURL + "?tweet.fields=created_at&expansions=author_id"
 )
 
-// FIXME - refactor all of the structs to make clearer and remove duplication
-
 type SimpleTweet struct {
 	ID    string `json:"id"`
 	Tag   string `json:"tag,omitempty"`
