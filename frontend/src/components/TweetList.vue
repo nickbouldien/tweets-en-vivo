@@ -29,7 +29,7 @@ import ConnectionInfo from '@/components/ConnectionInfo.vue'
 import Tweet from '@/components/Tweet.vue'
 import { websocketUrl } from '@/config';
 import { ITweet } from '@/types';
-import { tweetResponses } from '@/data';
+// import { tweets } from '@/data';
 
 @Component({
   components: {
