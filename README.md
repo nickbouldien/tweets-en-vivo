@@ -5,8 +5,6 @@ stream tweets to your terminal based on rules (using the [Twitter v2 API](https:
 (I know there are good alternatives to this such as [tweetdeck]([https://tweetdeck.twitter.com/]) or for a 
 Go library, [go-twitter](https://github.com/dghubble/go-twitter/). This project is just for fun.)
 
-> the rules must follow Twitter's documentation. You can put your rules in the `/rules` directory and if desired,
-you can place "private rules" (not tracked by git) in the `/rules/private/` directory.
 
 ## quick demo
 ![tweets-en-vivo demo](demo.gif)
@@ -31,7 +29,7 @@ list of available commands:
 ### details and examples for each command:
 
 #### add
-this command allows you to add rules to the stream.  NOTE: passing a file is optional. the default file is `rules.json`
+this command allows you to add rules to the stream.  NOTE: passing a file is optional. the default file is `rules/rules.json`.
 ```bash
 # assuming the files lives in the `rules/` directory
 ./tweets-en-vivo -command=add -file=my-rules.json
@@ -81,11 +79,12 @@ NOTE: the help "menu" is also displayed if you type in a command that does not e
 ```
 
 
-## frontend documentation
-[frontend readme](./frontend/README.md)
+## stream rules
+the rules must follow Twitter's documentation. You can put your rules in the `/rules` directory and if desired,
+you can place "private rules" (not tracked by git) in the `/rules/private/` directory.
 
 
-## twitter API documentation
+### twitter API documentation
 - [filtered streams - rules](https://developer.twitter.com/en/docs/twitter-api/tweets/filtered-stream/integrate/build-a-rule)
 
 
@@ -96,11 +95,26 @@ v2 endpoints (base url = https://api.twitter.com/2/)
 - `POST /tweets/search/stream/rules`
 
 
-## TODOs
+## frontend documentation
+[frontend README](./frontend/README.md)
+
+
+### resources
+- [go-twitter](https://github.com/dghubble/go-twitter)
+
+
+### TODOs
+There are lots of things I plan on adding/fixing/refactoring.
+
+Here are a few:
 - write tests!
 - customize the tweet fields retrieved (right now it is decently hard coded to fields I care about)
-- format the printing to terminal
+- customize the tweet filter params (language, location, etc.)
+- need better file/code organization
 - lots of refactoring/cleanup
-- refactor all of the tweet/response typings
 - make the websocket server cancelable
+- add "hooks" to intercept a tweet and do something with it
+- clean up the http requests (there is a lot of duplication)
+- make it more easily deployable (use env vars for things like ports, urls, tokens, etc.)
 - add the ability to add/delete stream rules from the frontend
+- display more tweet fields (tags, etc.) on the frontend

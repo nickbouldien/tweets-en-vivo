@@ -6,7 +6,8 @@ export interface ITweet {
   id: string;
   matchingRules?: IRule[];
   text: string;
-  tag?: string;
+  tweetUrl: string;
+  userUrl: string;
 }
 
 export interface IRule {

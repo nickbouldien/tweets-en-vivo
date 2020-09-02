@@ -22,3 +22,7 @@ yarn test:unit
 
 ## resources
 - [www.bestcssbuttongenerator.com/](https://www.bestcssbuttongenerator.com/#/28)
+
+
+### TODOs
+- dark mode

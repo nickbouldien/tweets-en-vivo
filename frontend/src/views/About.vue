@@ -6,7 +6,7 @@
     </p>
     <p>
       You can find the source code on 
-      <a href="https://github.com/nickbouldien/tweets-en-vivo" target="_blank" rel="noopener">github: tweets-en-vivo</a>
+      <a href="https://github.com/nickbouldien/tweets-en-vivo" target="_blank" rel="noopener">github</a>
     </p>
 
     <!-- <h3>helpful links</h3>

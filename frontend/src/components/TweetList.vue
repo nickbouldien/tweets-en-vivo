@@ -16,6 +16,10 @@
         :key="tweet.id"
         :tweet="tweet"
       />
+      <li v-show="tweets.length === 0" class="empty-list">
+        There are no tweets to display
+      </li>
+      <!-- TODO - add a message if there are no tweets -->
     </ul>
   </section>
 </template>
@@ -27,8 +31,7 @@ import { Component, Watch } from 'vue-property-decorator';
 import ConnectionInfo from '@/components/ConnectionInfo.vue'
 import Tweet from '@/components/Tweet.vue'
 import { websocketUrl } from '@/config';
-import { ITweet, ITweetResponse } from '@/types';
-import { tweetResponses } from '@/data';
+import { ITweet } from '@/types';
 
 @Component({
   components: {
@@ -41,37 +44,13 @@ export default class TweetList extends Vue {
   socket: WebSocket | null = null;
   tweets: ITweet[] = [];
 
-  mounted() {
-    // TODO - remove this. this is only for dev/debugging
-    this.tweets = tweetResponses.map(tweetResponse => this.mapTweetResponseToTweet(tweetResponse));
-  }
-
   toggleConnection() {
     if (this.socket) {
       // close the socket if it already exists
-      console.log("this.socket exists: ", this.socket);
       this.socket.close();
       this.socket = null;
     }
     this.createWebSocketConnection();
-  }
-
-  mapTweetResponseToTweet(tweetResponse: ITweetResponse): ITweet {
-    let author = tweetResponse.includes.users && tweetResponse.includes.users[0];
-    let tweetData = tweetResponse.data;
-
-    let tweet: ITweet = {
-      id: tweetData.id,
-      text: tweetData.text,
-      tag: tweetData.tag,
-      authorId: tweetData.id,
-      createdAt: tweetData.createdAt,
-      authorUsername: author.username,
-      authorName: author.name,
-      matchingRules: tweetResponse.matching_rules,
-    }
-
-    return tweet;
   }
 
   createWebSocketConnection(): void {
@@ -85,11 +64,10 @@ export default class TweetList extends Vue {
     }
 
     this.socket.onmessage = (event: MessageEvent) => {
-      let tweetResponse: ITweetResponse;
+      let tweet: ITweet;
 
       try {
-        tweetResponse = JSON.parse(event.data)
-        let tweet: ITweet = this.mapTweetResponseToTweet(tweetResponse);
+        tweet = JSON.parse(event.data)
         console.log("==> tweet: ", tweet);
         // FIXME - better (more efficient) way to do this?
         this.tweets.unshift(tweet);
@@ -117,8 +95,12 @@ export default class TweetList extends Vue {
 <style scoped lang="scss">
 #tweet-list {
   border-radius: 10px;
-  padding: 12px;
+  padding: 6px 12px;
   text-align: left;
+}
+
+h2 {
+  margin: 6px 0;
 }
 
 ul {
@@ -126,5 +108,12 @@ ul {
   list-style: none;
   overflow-y: scroll;
   padding-left: 0;
+}
+
+.empty-list {
+  background-color: #f6f8fa;
+  border-radius: 10px;
+  margin: 6px 0;
+  padding: 8px;
 }
 </style>
