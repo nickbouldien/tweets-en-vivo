@@ -129,7 +129,7 @@ func (o *Options) handleAddRulesCommand(client *twitter.Client) {
 
 	b, err := ioutil.ReadAll(file)
 	if err != nil {
-		log.Fatal("could not read the json", err)
+		log.Fatal("could not read the file", err)
 	}
 
 	// second: add the rules

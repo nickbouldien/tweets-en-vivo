@@ -1,6 +1,7 @@
 # tweets-en-vivo frontend
 
 ## Project setup
+### install dependencies
 ```
 yarn install
 ```
@@ -15,14 +16,9 @@ yarn serve
 yarn build
 ```
 
-### Run your unit tests
-```
-yarn test:unit
-```
-
 ## resources
 - [www.bestcssbuttongenerator.com/](https://www.bestcssbuttongenerator.com/#/28)
 
 
 ### TODOs
-- dark mode
+- add a dark mode

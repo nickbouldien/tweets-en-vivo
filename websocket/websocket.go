@@ -38,7 +38,7 @@ func NewStream(wsConn *websocket.Conn, wsChan chan []byte) *Stream {
 	}
 }
 
-// Handler handles the data received from the channel
+// Handler handles the data received on the channel
 func (w *Stream) Handler(ch <-chan []byte) {
 	defer func() {
 		fmt.Println("closing the websocket connection")
@@ -70,10 +70,6 @@ func (w *Stream) close() error {
 
 // Write writes data to the websocket connection
 func (w *Stream) write(data []byte) {
-	//b, err := json.Marshal(data); if err != nil {
-	//	fmt.Println("error marshalling the data to a slice of bytes")
-	//}
-
 	if err := w.WsConn.WriteMessage(websocket.TextMessage, data); err != nil {
 		_ = fmt.Errorf("error writing the message to the websocket: %v", err)
 		return
