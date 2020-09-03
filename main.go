@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"sync"
 	"tweets-en-vivo/CLI"
@@ -28,20 +27,11 @@ func main() {
 	flag.Parse()
 	ruleIDs := flag.Args()
 
-	options := CLI.Options{
-		Command:         *command,
-		CreateWebsocket: *createWebsocket,
-		File:            *file,
-		DryRun:          *dryRun,
-		RuleIDs:         ruleIDs,
-	}
-
-	fmt.Println("--> file:", options.File)
-	fmt.Println("--> command:", options.Command)
-
 	var wg sync.WaitGroup
 
-	CLI.HandleCLICommand(options, &wg)
+	CLIOptions := CLI.NewOptions(*command, *createWebsocket, *dryRun, *file, ruleIDs)
+
+	CLIOptions.HandleCommand(&wg)
 
 	wg.Wait()
 }

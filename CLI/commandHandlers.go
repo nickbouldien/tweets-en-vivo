@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strings"
 	"sync"
 	"tweets-en-vivo/twitter"
 	"tweets-en-vivo/util"
@@ -15,49 +16,78 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// Options holds all the options the user entered from the command line
 type Options struct {
-	Command         string
-	CreateWebsocket bool
-	DryRun          bool
-	File            string
-	RuleIDs         []string
+	command         string
+	createWebsocket bool
+	dryRun          bool
+	file            string
+	ruleIDs         []string
 }
 
-func HandleCLICommand(options Options, wg *sync.WaitGroup) {
+// NewOptions creates a new Options struct
+func NewOptions(cmd string, createWebsocket bool, dryRun bool, file string, ruleIds []string) *Options {
+	return &Options{
+		command:         cmd,
+		createWebsocket: createWebsocket,
+		dryRun:          dryRun,
+		file:            file,
+		ruleIDs:         ruleIds,
+	}
+}
+
+func (o *Options) HandleCommand(wg *sync.WaitGroup) {
 	apiToken := os.Getenv("API_TOKEN")
 	if apiToken == "" {
 		log.Fatal(`make sure that you have filled in the required
 				api credentials in the .env file`)
 	}
 
+	fmt.Println("--> file:", o.file)
+	fmt.Println("--> command:", o.command)
+
 	token := fmt.Sprint("Bearer ", apiToken)
 	client := twitter.NewClient(token)
 
-	switch options.Command {
+	switch o.command {
 	case "add":
-		handleAddRulesCommand(client, options.File, options.DryRun)
+		o.handleAddRulesCommand(client)
 	case "check":
 		// check (fetch) the current rules
-		handleCheckRulesCommand(client)
+		o.handleCheckRulesCommand(client)
 	case "delete":
 		// delete the rules with ids passed in as args
-		handleDeleteCommand(client, options.RuleIDs)
+		o.handleDeleteCommand(client)
 	case "delete-all":
 		// delete all of the current rules
-		handleDeleteAllCommand(client)
+		o.handleDeleteAllCommand(client)
 	case "help":
 		// show the available commands / options
-		handleHelpCommand()
+		o.handleHelpCommand()
 		return
 	case "stream":
 		// subscribe to the feed
-		fmt.Println("createWebsocket: ", options.CreateWebsocket)
+		fmt.Println("createWebsocket: ", o.createWebsocket)
 
-		// FIXME - clean all of this up
+		// FIXME - clean all of this up. find better way to asynchronously run the websocket server and
+		// handle the connection with the twitter API
 
-		if options.CreateWebsocket {
+		if o.createWebsocket {
 			wg.Add(1)
-			// only start the websocket connection if the -websocket arg is present
+
+			portEnvVar := os.Getenv("WEBSOCKET_PORT")
+			wsPort := fmt.Sprintf(":%s", portEnvVar)
+
+			if wsPort == ":" {
+				// the WEBSOCKET_PORT was empty so use a fallback port
+				wsPort = ":5000"
+			}
+
+			allowedOriginsEnvVar := os.Getenv("ALLOWED_ORIGINS")
+			wsClient.AllowedOrigins = strings.Split(allowedOriginsEnvVar, ",")
+			fmt.Println("websocket server allowed origins: ", wsClient.AllowedOrigins)
+
+			// only start the websocket server if the `-websocket` arg is present
 			http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 				ws, err := wsClient.Upgrader.Upgrade(w, r, nil)
 
@@ -74,25 +104,24 @@ func HandleCLICommand(options Options, wg *sync.WaitGroup) {
 
 				websocketStream := wsClient.NewStream(ws, make(chan []byte))
 
-				// TODO - fix this
-				handleStreamCommand(client, websocketStream)
+				o.handleStreamCommand(client, websocketStream)
 			})
 
 			go func() {
-				log.Fatal(http.ListenAndServe(wsClient.Addr, nil))
+				log.Fatal(http.ListenAndServe(wsPort, nil))
 			}()
 		} else {
-			handleStreamCommand(client, nil)
+			o.handleStreamCommand(client, nil)
 		}
 	default:
-		handleHelpCommand()
+		o.handleHelpCommand()
 		os.Exit(1)
 	}
 }
 
-func handleAddRulesCommand(client *twitter.Client, filename string, dryRun bool) {
+func (o *Options) handleAddRulesCommand(client *twitter.Client) {
 	// first: import the rules json file
-	file, err := os.Open(path.Join("rules/", filename))
+	file, err := os.Open(path.Join("rules/", o.file))
 	if err != nil {
 		log.Fatal("could not open the json file", err)
 	}
@@ -100,18 +129,18 @@ func handleAddRulesCommand(client *twitter.Client, filename string, dryRun bool)
 
 	b, err := ioutil.ReadAll(file)
 	if err != nil {
-		log.Fatal("could not read the json", err)
+		log.Fatal("could not read the file", err)
 	}
 
 	// second: add the rules
-	rules, err := client.AddRules(b, dryRun)
+	rules, err := client.AddRules(b, o.dryRun)
 	if err != nil {
 		log.Fatal("error reading the response", err)
 	}
 	util.PrettyPrint(rules)
 }
 
-func handleCheckRulesCommand(client *twitter.Client) {
+func (o *Options) handleCheckRulesCommand(client *twitter.Client) {
 	rules, err := client.FetchCurrentRules()
 	if err != nil {
 		log.Fatal(err)
@@ -119,19 +148,19 @@ func handleCheckRulesCommand(client *twitter.Client) {
 	util.PrettyPrint(rules)
 }
 
-func handleDeleteCommand(client *twitter.Client, ids twitter.TweetIDs) {
-	if len(ids) == 0 {
+func (o *Options) handleDeleteCommand(client *twitter.Client) {
+	if len(o.ruleIDs) == 0 {
 		log.Fatal("you must supply a list of rule ids to delete")
 	}
 
-	rules, err := client.DeleteStreamRules(ids)
+	rules, err := client.DeleteStreamRules(o.ruleIDs)
 	if err != nil {
 		log.Fatal(err)
 	}
 	util.PrettyPrint(rules)
 }
 
-func handleDeleteAllCommand(client *twitter.Client) {
+func (o *Options) handleDeleteAllCommand(client *twitter.Client) {
 	// first: get all the current rule ids
 	currentRules, e := client.FetchCurrentRules()
 	if e != nil {
@@ -157,14 +186,14 @@ func handleDeleteAllCommand(client *twitter.Client) {
 	util.PrettyPrint(rules)
 }
 
-func handleHelpCommand() {
+func (o *Options) handleHelpCommand() {
 	fmt.Println(`--> the available commands are: 
 				"add", "check", "delete", "delete-all", and "stream"`)
 }
 
-func handleStreamCommand(client *twitter.Client, wsStream *wsClient.Stream) {
+func (o *Options) handleStreamCommand(client *twitter.Client, wsStream *wsClient.Stream) {
 	if wsStream != nil {
-		fmt.Println("there is a websocket connection open")
+		// start the websocket
 		go wsStream.Handler(wsStream.WsChannel)
 	}
 

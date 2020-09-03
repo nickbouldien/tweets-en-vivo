@@ -19,7 +19,7 @@ list of available commands:
 - delete-all
 - help
 
-(NOTE: all of this is assuming you have built a binary named `tweets-en-vivo`)
+(NOTE: all the below examples assume that you have built a binary named `tweets-en-vivo`)
 
 ### general usage:
 ```bash
@@ -78,6 +78,16 @@ NOTE: the help "menu" is also displayed if you type in a command that does not e
 ./tweets-en-vivo -command=help
 ```
 
+## project setup
+### backend
+1. create a [Twitter dev account](https://developer.twitter.com/en/apply-for-access) and project to get an API token 
+2. pull down this repo
+3. add a `.env` file in the root directory and add your Twitter API token
+4. run `go build`
+
+### frontend web client (optional)
+check out the [frontend README](./frontend/README.md)
+
 
 ## stream rules
 the rules must follow Twitter's documentation. You can put your rules in the `/rules` directory and if desired,
@@ -95,13 +105,9 @@ v2 endpoints (base url = https://api.twitter.com/2/)
 - `POST /tweets/search/stream/rules`
 
 
-## frontend documentation
-[frontend README](./frontend/README.md)
-
-
 ### resources
 - [go-twitter](https://github.com/dghubble/go-twitter)
-
+- [JustForFunc youtube channel](https://www.youtube.com/c/JustForFunc/videos)
 
 ### TODOs
 There are lots of things I plan on adding/fixing/refactoring.
@@ -118,3 +124,7 @@ Here are a few:
 - make it more easily deployable (use env vars for things like ports, urls, tokens, etc.)
 - add the ability to add/delete stream rules from the frontend
 - display more tweet fields (tags, etc.) on the frontend
+
+### License
+
+[MIT License](LICENSE)

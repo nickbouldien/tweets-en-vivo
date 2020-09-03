@@ -20,8 +20,6 @@ const (
 	streamURL = baseURL + "?tweet.fields=created_at&expansions=author_id"
 )
 
-// FIXME - refactor all of the structs to make clearer and remove duplication
-
 type SimpleTweet struct {
 	ID    string `json:"id"`
 	Tag   string `json:"tag,omitempty"`
@@ -74,7 +72,7 @@ func (r *StreamResponseBodyReader) Read() ([]byte, error) {
 		line, err := r.reader.ReadBytes('\n')
 
 		if len(line) == 0 {
-			fmt.Println("len(line) == 0")
+			fmt.Println("...")
 			continue
 		}
 
@@ -91,7 +89,6 @@ func (r *StreamResponseBodyReader) Read() ([]byte, error) {
 				_ = fmt.Errorf("buf.Len() : %v", err)
 				return nil, err
 			}
-			fmt.Println("breaking")
 			break
 		}
 

@@ -42,7 +42,7 @@ export default class ConnectionInfo extends Vue {
 }
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 /* TODO - extract all of this to a custom component */
 button {
 	background: linear-gradient(to bottom, #f9f9f9 5%, #e9e9e9 100%);
