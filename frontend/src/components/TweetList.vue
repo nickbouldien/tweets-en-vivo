@@ -92,7 +92,7 @@ export default class TweetList extends Vue {
 }
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 #tweet-list {
   border-radius: 10px;
   padding: 6px 12px;

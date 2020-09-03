@@ -17,7 +17,7 @@ import { Component, Prop, Vue } from 'vue-property-decorator';
 export default class Welcome extends Vue {}
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 a {
   color: #42b983;
 }

@@ -7,10 +7,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// TODO - get from config (env variables). hard coding for now
-var AllowedOrigins = []string{
-	"http://localhost:8080",
-}
+var AllowedOrigins []string
 
 var Upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,

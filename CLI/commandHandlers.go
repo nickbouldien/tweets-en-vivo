@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strings"
 	"sync"
 	"tweets-en-vivo/twitter"
 	"tweets-en-vivo/util"
@@ -82,7 +83,11 @@ func (o *Options) HandleCommand(wg *sync.WaitGroup) {
 				wsPort = ":5000"
 			}
 
-			// only start the websocket connection if the -websocket arg is present
+			allowedOriginsEnvVar := os.Getenv("ALLOWED_ORIGINS")
+			wsClient.AllowedOrigins = strings.Split(allowedOriginsEnvVar, ",")
+			fmt.Println("websocket server allowed origins: ", wsClient.AllowedOrigins)
+
+			// only start the websocket server if the `-websocket` arg is present
 			http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 				ws, err := wsClient.Upgrader.Upgrade(w, r, nil)
 

@@ -19,7 +19,7 @@ list of available commands:
 - delete-all
 - help
 
-(NOTE: all of this is assuming you have built a binary named `tweets-en-vivo`)
+(NOTE: all the below examples assume that you have built a binary named `tweets-en-vivo`)
 
 ### general usage:
 ```bash
@@ -101,7 +101,7 @@ v2 endpoints (base url = https://api.twitter.com/2/)
 
 ### resources
 - [go-twitter](https://github.com/dghubble/go-twitter)
-
+- [JustForFunc youtube channel](https://www.youtube.com/c/JustForFunc/videos)
 
 ### TODOs
 There are lots of things I plan on adding/fixing/refactoring.
