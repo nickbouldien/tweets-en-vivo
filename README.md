@@ -89,6 +89,16 @@ NOTE: the help "menu" is also displayed if you type in a command that does not e
 check out the [frontend README](./frontend/README.md)
 
 
+### using docker
+```bash
+make build
+```
+
+```bash
+# example running the app in docker with the "stream" command (with the websocket set up on port 5000)
+docker run --rm -ti -p 5000:5000 tweets-en-vivo -command=stream -websocket
+```
+
 ## stream rules
 the rules must follow Twitter's documentation. You can put your rules in the `/rules` directory and if desired,
 you can place "private rules" (not tracked by git) in the `/rules/private/` directory.
