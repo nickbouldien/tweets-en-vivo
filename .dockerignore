@@ -1,0 +1,11 @@
+.editorconfig
+.idea/
+.git/
+LICENSE
+Makefile
+README.md
+
+docs/
+
+# don't copy the frontend files since it has its own docker build
+frontend/**

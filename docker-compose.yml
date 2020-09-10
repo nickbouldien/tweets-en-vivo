@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  tweets-en-vivo:
+    build: .
+    container_name: tweets-en-vivo
+    ports:
+      - 5000:5000
+
+  tweets-en-vivo-frontend:
+    build: ./frontend
+    container_name: tweets-en-vivo-frontend
+    ports:
+      - 8080:8080
+    links:
+      - tweets-en-vivo

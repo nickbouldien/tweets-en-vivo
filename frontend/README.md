@@ -19,7 +19,7 @@ yarn build
 ## using docker
 ```bash
 # build
-docker build -t tweets-en-vivo-frontend .
+docker build --tag tweets-en-vivo-frontend .
 ```
 
 ```bash

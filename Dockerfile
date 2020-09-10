@@ -3,8 +3,9 @@ FROM alpine
 RUN apk update
 
 # copy all project files (including the required .env file)
-ADD . .
+COPY . /bin/app
+WORKDIR /bin/app
 
 EXPOSE 5000
 
-ENTRYPOINT ["/tweets-en-vivo"]
+ENTRYPOINT ["/bin/app/tweets-en-vivo"]
