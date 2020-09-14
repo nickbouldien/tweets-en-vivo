@@ -28,6 +28,7 @@ var Upgrader = websocket.Upgrader{
 type Stream struct {
 	WsConn    *websocket.Conn
 	WsChannel chan []byte
+	WSDone    chan bool
 }
 
 // NewStream creates a new WebsocketStream
@@ -39,7 +40,7 @@ func NewStream(wsConn *websocket.Conn, wsChan chan []byte) *Stream {
 }
 
 // Handler handles the data received on the channel
-func (w *Stream) Handler(ch <-chan []byte) {
+func (w *Stream) Handler() {
 	defer func() {
 		fmt.Println("closing the websocket connection")
 		err := w.close()
@@ -51,16 +52,26 @@ func (w *Stream) Handler(ch <-chan []byte) {
 
 	for {
 		select {
-		case data := <-ch:
+		case data := <-w.WsChannel:
 			w.write(data)
+		case <-w.WSDone:
+			// close the channels and the websocket connection
+			fmt.Println("ending the stream")
+			close(w.WsChannel)
+
+			err := w.close()
+			if err != nil {
+				_ = fmt.Errorf("error closing the websocket: %v", err)
+				return
+			}
 		}
 	}
+
 }
 
 // Close closes the websocket connection
 func (w *Stream) close() error {
 	err := w.WsConn.Close()
-	//close(w.WsChannel)
 
 	if err != nil {
 		return err
