@@ -16,6 +16,18 @@ yarn serve
 yarn build
 ```
 
+## using docker
+```bash
+# build
+docker build --tag tweets-en-vivo-frontend .
+```
+
+```bash
+# run
+docker run -it -p 8080:8080 --rm tweets-en-vivo-frontend
+```
+
+
 ## resources
 - [www.bestcssbuttongenerator.com/](https://www.bestcssbuttongenerator.com/#/28)
 

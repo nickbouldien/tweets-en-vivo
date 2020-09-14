@@ -194,22 +194,23 @@ func (o *Options) handleHelpCommand() {
 func (o *Options) handleStreamCommand(client *twitter.Client, wsStream *wsClient.Stream) {
 	if wsStream != nil {
 		// start the websocket
-		go wsStream.Handler(wsStream.WsChannel)
+		go wsStream.Handler()
 	}
 
 	ch := make(chan []byte)
-	go client.FetchStream(ch)
+	done := make(chan bool)
+	go client.FetchStream(ch, done)
 
 	for {
 		select {
 		case data := <-ch:
 			twitter.HandleTweetData(wsStream, data)
-			//case <-"done":
-			// TODO - implement
-			//	fmt.Println("ending the stream")
-			//	close(ch)
-			//default:
-			//	fmt.Println("default")
+		case <-done:
+			// close the channels and the websocket connection
+			fmt.Println("ending the stream")
+			close(ch)
+
+			wsStream.WSDone <- true
 		}
 	}
 }

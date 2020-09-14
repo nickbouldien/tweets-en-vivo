@@ -7,7 +7,7 @@ Go library, [go-twitter](https://github.com/dghubble/go-twitter/). This project 
 
 
 ## quick demo
-![tweets-en-vivo demo](demo.gif)
+![tweets-en-vivo demo](docs/demo.gif)
 
 
 ## commands
@@ -87,6 +87,17 @@ NOTE: the help "menu" is also displayed if you type in a command that does not e
 
 ### frontend web client (optional)
 check out the [frontend README](./frontend/README.md)
+
+
+### using docker
+```bash
+make build
+```
+
+```bash
+# example running the app in docker with the "stream" command (with the websocket set up on port 5000)
+docker run --rm -ti -p 5000:5000 tweets-en-vivo -command=stream -websocket
+```
 
 
 ## stream rules

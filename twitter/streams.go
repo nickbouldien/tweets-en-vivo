@@ -118,7 +118,7 @@ func NewClient(token string) *Client {
 }
 
 // FetchStream gets the main stream of tweets that match the current rules
-func (client *Client) FetchStream(ch chan<- []byte) {
+func (client *Client) FetchStream(ch chan<- []byte, done chan<- bool) {
 	req, err := http.NewRequest(http.MethodGet, streamURL, nil)
 	if err != nil {
 		_ = fmt.Errorf("error creating the FetchStream request: %v", err)
@@ -148,6 +148,9 @@ func (client *Client) FetchStream(ch chan<- []byte) {
 		// send the data over the channel
 		ch <- data
 	}
+
+	done <- true
+	return
 }
 
 // Print prints a tweet with formatting/colors
@@ -201,5 +204,6 @@ func HandleTweetData(wsStream *wsClient.Stream, data []byte) {
 		wsStream.WsChannel <- b
 	}
 
+	// print the formatted tweet to the terminal
 	t.Print()
 }
