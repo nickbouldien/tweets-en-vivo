@@ -16,11 +16,15 @@ import (
 )
 
 const (
-	baseURL  = "https://api.twitter.com/2/tweets/search/stream"
-	rulesURL = baseURL + "/rules"
-	// TODO - make the "expanded fields" in the streamURL optional/expandable
-	streamURL = baseURL + "?tweet.fields=created_at&expansions=author_id"
+	baseURL    = "https://api.twitter.com/2/tweets/search/stream"
+	rulesURL   = baseURL + "/rules"
+	streamURL  = baseURL + "?tweet.fields=created_at,lang&expansions=author_id"
+	twitterURL = "https://twitter.com/"
 )
+
+// the (spoken) languages that you want to see tweets in
+// they are BCP47 language tags and are only returned in the Tweet if detected by Twitter
+var acceptedLangs = []string{"en", "es", "pt"}
 
 type SimpleTweet struct {
 	ID    string `json:"id"`
@@ -29,10 +33,11 @@ type SimpleTweet struct {
 }
 
 type StreamTweet struct {
+	AuthorID  string `json:"author_id"`
+	CreatedAt string `json:"created_at"`
+	Lang      string `json:"lang,omitempty"`
 	ID        string `json:"id"`
 	Text      string `json:"text"`
-	CreatedAt string `json:"created_at"`
-	AuthorID  string `json:"author_id"`
 }
 
 type StreamData struct {
@@ -178,11 +183,16 @@ func HandleTweetData(wsStream *wsClient.Stream, data []byte) {
 		log.Fatal(err)
 	}
 
+	// return (skip the tweet) if the tweet isn't in a language you want to see
+	if !isAcceptedLanguage(streamData.Data.Lang) {
+		return
+	}
+
 	// TODO - check if this is safe based on the twitter docs
 	author := streamData.Includes["users"][0]
 
-	userURL := fmt.Sprint("https://twitter.com/", author.Username)
-	tweetURL := fmt.Sprint("https://twitter.com/", author.Username, "/status/", streamData.Data.ID)
+	userURL := fmt.Sprint(twitterURL, author.Username)
+	tweetURL := fmt.Sprint(twitterURL, author.Username, "/status/", streamData.Data.ID)
 
 	t := Tweet{
 		AuthorID:       author.ID,
@@ -209,4 +219,18 @@ func HandleTweetData(wsStream *wsClient.Stream, data []byte) {
 
 	// print the formatted tweet to the terminal
 	t.Print()
+}
+
+// isAcceptedLanguage returns true if the tweet's language is in `acceptedLangs`
+/*
+	TODO - check if the twitter API can do this.  I thought it was possible to subscribe to tweets in certain
+	languages, but didn't see where that was possible with the v2 API, so doing the filtering here
+*/
+func isAcceptedLanguage(tweetLanguage string) bool {
+	for _, lang := range acceptedLangs {
+		if tweetLanguage == lang {
+			return true
+		}
+	}
+	return false
 }
