@@ -3,6 +3,7 @@ package twitter
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,6 +12,7 @@ import (
 	wsClient "tweets-en-vivo/websocket"
 
 	"github.com/logrusorgru/aurora"
+	"golang.org/x/oauth2"
 )
 
 const (
@@ -105,15 +107,24 @@ func (r *StreamResponseBodyReader) Read() ([]byte, error) {
 
 // Client connects with the twitter API
 type Client struct {
-	apiToken   string
+	//apiToken   string
 	httpClient *http.Client
 }
 
 // NewClient creates a new Client
-func NewClient(token string) *Client {
+func NewClient(ctx context.Context, token string) *Client {
+	//httpClient := &http.Client{}
+	//return &oauth2.NewClient(ctx, oauth2.StaticTokenSource(&oauth2.Token{
+	//	AccessToken: token,
+	//	TokenType:   "Bearer",
+	//}))
+
 	return &Client{
-		apiToken:   token,
-		httpClient: &http.Client{},
+		//apiToken:   token,
+		httpClient: oauth2.NewClient(ctx, oauth2.StaticTokenSource(&oauth2.Token{
+			AccessToken: token,
+			TokenType:   "Bearer",
+		})),
 	}
 }
 
@@ -123,7 +134,7 @@ func (client *Client) FetchStream(ch chan<- []byte, done chan<- bool) {
 	if err != nil {
 		_ = fmt.Errorf("error creating the FetchStream request: %v", err)
 	}
-	req.Header.Add("Authorization", client.apiToken)
+	//req.Header.Add("Authorization", client.apiToken)
 
 	resp, err := client.httpClient.Do(req)
 	if err != nil {

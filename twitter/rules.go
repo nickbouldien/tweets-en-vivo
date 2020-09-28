@@ -56,14 +56,14 @@ type MatchingRule struct {
 // FetchCurrentRules fetches the current rules that are persisted
 func (client *Client) FetchCurrentRules() (*FetchRulesResponse, error) {
 	req, err := http.NewRequest(http.MethodGet, rulesURL, nil)
-	req.Header.Add("Authorization", client.apiToken)
+	req.Header.Add("random", "asdfasdf")
+
+	fmt.Println("req: ", req)
 
 	resp, err := client.httpClient.Do(req)
-
 	if err != nil {
 		return nil, fmt.Errorf("error fetching the feed rules: %v", err)
 	}
-
 	defer resp.Body.Close()
 	fmt.Println("response status code: ", resp.StatusCode)
 
@@ -90,7 +90,7 @@ func (client *Client) AddRules(jsonBody []byte, dryRun bool) (*AddRulesResponse,
 	}
 
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(jsonBody))
-	req.Header.Add("Authorization", client.apiToken)
+	//req.Header.Add("Authorization", client.apiToken)
 	req.Header.Add("Content-type", "application/json")
 
 	resp, err := client.httpClient.Do(req)
@@ -132,7 +132,7 @@ func (client *Client) DeleteStreamRules(ruleIDs TweetIDs) (*DeleteRulesResponse,
 	}
 
 	req, err := http.NewRequest(http.MethodPost, rulesURL, bytes.NewBuffer(rulesToDeleteJSON))
-	req.Header.Add("Authorization", client.apiToken)
+	//req.Header.Add("Authorization", client.apiToken)
 	req.Header.Add("Content-type", "application/json")
 
 	resp, err := client.httpClient.Do(req)

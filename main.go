@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
+	"os"
 	"sync"
 	"tweets-en-vivo/CLI"
+	"tweets-en-vivo/twitter"
 
 	"github.com/joho/godotenv"
 )
@@ -27,11 +30,20 @@ func main() {
 	flag.Parse()
 	ruleIDs := flag.Args()
 
+	apiToken := os.Getenv("API_TOKEN")
+	if apiToken == "" {
+		log.Fatal(`make sure that you have filled in the required
+				api credentials in the .env file`)
+	}
+	//token := fmt.Sprint("Bearer ", apiToken)
+
+	ctx := context.Background()
+
+	client := twitter.NewClient(ctx, apiToken)
+
 	var wg sync.WaitGroup
-
 	CLIOptions := CLI.NewOptions(*command, *createWebsocket, *dryRun, *file, ruleIDs)
-
-	CLIOptions.HandleCommand(&wg)
+	CLIOptions.HandleCommand(client, &wg)
 
 	wg.Wait()
 }
