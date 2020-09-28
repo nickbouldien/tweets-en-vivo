@@ -107,20 +107,12 @@ func (r *StreamResponseBodyReader) Read() ([]byte, error) {
 
 // Client connects with the twitter API
 type Client struct {
-	//apiToken   string
 	httpClient *http.Client
 }
 
 // NewClient creates a new Client
 func NewClient(ctx context.Context, token string) *Client {
-	//httpClient := &http.Client{}
-	//return &oauth2.NewClient(ctx, oauth2.StaticTokenSource(&oauth2.Token{
-	//	AccessToken: token,
-	//	TokenType:   "Bearer",
-	//}))
-
 	return &Client{
-		//apiToken:   token,
 		httpClient: oauth2.NewClient(ctx, oauth2.StaticTokenSource(&oauth2.Token{
 			AccessToken: token,
 			TokenType:   "Bearer",
@@ -134,7 +126,6 @@ func (client *Client) FetchStream(ch chan<- []byte, done chan<- bool) {
 	if err != nil {
 		_ = fmt.Errorf("error creating the FetchStream request: %v", err)
 	}
-	//req.Header.Add("Authorization", client.apiToken)
 
 	resp, err := client.httpClient.Do(req)
 	if err != nil {
@@ -178,6 +169,7 @@ func (t *Tweet) Print() {
 	)
 }
 
+// HandleTweetData handles the tweet data by printing it and sending it to the websocket if the websocket channel is open
 func HandleTweetData(wsStream *wsClient.Stream, data []byte) {
 	var streamData StreamData
 	err := json.Unmarshal(data, &streamData)

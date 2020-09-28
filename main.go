@@ -35,7 +35,6 @@ func main() {
 		log.Fatal(`make sure that you have filled in the required
 				api credentials in the .env file`)
 	}
-	//token := fmt.Sprint("Bearer ", apiToken)
 
 	ctx := context.Background()
 

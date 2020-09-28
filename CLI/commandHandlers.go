@@ -37,8 +37,8 @@ func NewOptions(cmd string, createWebsocket bool, dryRun bool, file string, rule
 }
 
 func (o *Options) HandleCommand(client *twitter.Client, wg *sync.WaitGroup) {
-	fmt.Println("--> file:", o.file)
 	fmt.Println("--> command:", o.command)
+	fmt.Println("--> file:", o.file)
 
 	switch o.command {
 	case "add":
