@@ -3,6 +3,7 @@ package twitter
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,14 +12,19 @@ import (
 	wsClient "tweets-en-vivo/websocket"
 
 	"github.com/logrusorgru/aurora"
+	"golang.org/x/oauth2"
 )
 
 const (
-	baseURL  = "https://api.twitter.com/2/tweets/search/stream"
-	rulesURL = baseURL + "/rules"
-	// TODO - make the "expanded fields" in the streamURL optional/expandable
-	streamURL = baseURL + "?tweet.fields=created_at&expansions=author_id"
+	baseURL    = "https://api.twitter.com/2/tweets/search/stream"
+	rulesURL   = baseURL + "/rules"
+	streamURL  = baseURL + "?tweet.fields=created_at,lang&expansions=author_id"
+	twitterURL = "https://twitter.com/"
 )
+
+// the (spoken) languages that you want to see tweets in
+// they are BCP47 language tags and are only returned in the Tweet if detected by Twitter
+var acceptedLangs = []string{"en", "es", "pt"}
 
 type SimpleTweet struct {
 	ID    string `json:"id"`
@@ -27,10 +33,11 @@ type SimpleTweet struct {
 }
 
 type StreamTweet struct {
+	AuthorID  string `json:"author_id"`
+	CreatedAt string `json:"created_at"`
+	Lang      string `json:"lang,omitempty"`
 	ID        string `json:"id"`
 	Text      string `json:"text"`
-	CreatedAt string `json:"created_at"`
-	AuthorID  string `json:"author_id"`
 }
 
 type StreamData struct {
@@ -105,15 +112,16 @@ func (r *StreamResponseBodyReader) Read() ([]byte, error) {
 
 // Client connects with the twitter API
 type Client struct {
-	apiToken   string
 	httpClient *http.Client
 }
 
 // NewClient creates a new Client
-func NewClient(token string) *Client {
+func NewClient(ctx context.Context, token string) *Client {
 	return &Client{
-		apiToken:   token,
-		httpClient: &http.Client{},
+		httpClient: oauth2.NewClient(ctx, oauth2.StaticTokenSource(&oauth2.Token{
+			AccessToken: token,
+			TokenType:   "Bearer",
+		})),
 	}
 }
 
@@ -123,7 +131,6 @@ func (client *Client) FetchStream(ch chan<- []byte, done chan<- bool) {
 	if err != nil {
 		_ = fmt.Errorf("error creating the FetchStream request: %v", err)
 	}
-	req.Header.Add("Authorization", client.apiToken)
 
 	resp, err := client.httpClient.Do(req)
 	if err != nil {
@@ -167,6 +174,7 @@ func (t *Tweet) Print() {
 	)
 }
 
+// HandleTweetData handles the tweet data by printing it and sending it to the websocket if the websocket channel is open
 func HandleTweetData(wsStream *wsClient.Stream, data []byte) {
 	var streamData StreamData
 	err := json.Unmarshal(data, &streamData)
@@ -175,11 +183,16 @@ func HandleTweetData(wsStream *wsClient.Stream, data []byte) {
 		log.Fatal(err)
 	}
 
+	// return (skip the tweet) if the tweet isn't in a language you want to see
+	if !isAcceptedLanguage(streamData.Data.Lang) {
+		return
+	}
+
 	// TODO - check if this is safe based on the twitter docs
 	author := streamData.Includes["users"][0]
 
-	userURL := fmt.Sprint("https://twitter.com/", author.Username)
-	tweetURL := fmt.Sprint("https://twitter.com/", author.Username, "/status/", streamData.Data.ID)
+	userURL := fmt.Sprint(twitterURL, author.Username)
+	tweetURL := fmt.Sprint(twitterURL, author.Username, "/status/", streamData.Data.ID)
 
 	t := Tweet{
 		AuthorID:       author.ID,
@@ -206,4 +219,18 @@ func HandleTweetData(wsStream *wsClient.Stream, data []byte) {
 
 	// print the formatted tweet to the terminal
 	t.Print()
+}
+
+// isAcceptedLanguage returns true if the tweet's language is in `acceptedLangs`
+/*
+	TODO - check if the twitter API can do this.  I thought it was possible to subscribe to tweets in certain
+	languages, but didn't see where that was possible with the v2 API, so doing the filtering here
+*/
+func isAcceptedLanguage(tweetLanguage string) bool {
+	for _, lang := range acceptedLangs {
+		if tweetLanguage == lang {
+			return true
+		}
+	}
+	return false
 }

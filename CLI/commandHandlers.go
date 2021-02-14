@@ -36,18 +36,9 @@ func NewOptions(cmd string, createWebsocket bool, dryRun bool, file string, rule
 	}
 }
 
-func (o *Options) HandleCommand(wg *sync.WaitGroup) {
-	apiToken := os.Getenv("API_TOKEN")
-	if apiToken == "" {
-		log.Fatal(`make sure that you have filled in the required
-				api credentials in the .env file`)
-	}
-
-	fmt.Println("--> file:", o.file)
+func (o *Options) HandleCommand(client *twitter.Client, wg *sync.WaitGroup) {
 	fmt.Println("--> command:", o.command)
-
-	token := fmt.Sprint("Bearer ", apiToken)
-	client := twitter.NewClient(token)
+	fmt.Println("--> file:", o.file)
 
 	switch o.command {
 	case "add":
